@@ -36,7 +36,8 @@ protected:
   virtual bool OnPaint(WPARAM wparam, LPARAM lparam, LRESULT& lresult) { return false; }
   virtual bool OnCreate(WPARAM wparam, LPARAM lparam, LRESULT& lresult) { return false; }
   virtual bool OnDestroy(WPARAM wparam, LPARAM lparam, LRESULT& lresult) { return false; }
-  virtual bool OnResize(WPARAM wparam, LPARAM lparam, LRESULT& lresult) { return false; }
+  virtual void OnResize(UINT width, UINT height) {}
+  virtual void OnMove(INT x, INT y) {}
 
 private:
   bool ProcessWindowMessage(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT& lresult);

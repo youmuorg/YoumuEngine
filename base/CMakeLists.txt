@@ -25,3 +25,5 @@ add_library(${BASE_WIN_DX_LIB} STATIC
 )
 target_link_libraries(${BASE_WIN_DX_LIB} PRIVATE Microsoft::DirectXTex)
 target_link_libraries(${BASE_WIN_DX_LIB} PUBLIC base_win)
+
+add_subdirectory("samples")

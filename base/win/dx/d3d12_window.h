@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../win32_window.h"
-#include "d3d11_utils.h"
+#include "d3d12_utils.h"
 #include "dxgi_utils.h"
 
 #include <chrono>
@@ -24,9 +24,9 @@ private:
   std::chrono::high_resolution_clock::duration _durationUpdate;
 };
 
-class D3d11Window : public Win32Window {
+class D3d12Window : public Win32Window {
 public:
-  D3d11Window();
+  D3d12Window();
 
   void Capture();
   void Paint();
@@ -37,11 +37,12 @@ private:
   virtual void OnMove(INT x, INT y) override;
 
 private:
-  D3d11Device _d3d11Device;
+  DxgiFactory4 _dxgiFactory4;
+  D3d12Device _device;
   DxgiDevice _dxgiDevice;
-  D3d11RenderTarget _d3d11RenderTarget;
-  std::unique_ptr<D3d11Quad> _quad;
-  std::unique_ptr<D3d11Triangle> _triangle;
+  D3d12Pipeline _pipeline;
+  //std::unique_ptr<D3d11Quad> _quad;
+  //std::unique_ptr<D3d11Triangle> _triangle;
   std::unique_ptr<DxgiDuplication> _duplication;
 
   _FpsCounter _fpsCounter;

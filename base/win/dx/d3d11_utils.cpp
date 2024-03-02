@@ -76,7 +76,7 @@ void D3d11Device::Clear() {
 
 }
 
-D3d11RenderTarget::D3d11RenderTarget(ID3D11Device* dev, uint32_t width, uint32_t height) {
+D3d11RenderTarget::D3d11RenderTarget(ID3D11Device* dev, UINT width, UINT height) {
   D3D11_TEXTURE2D_DESC desc;
   desc.ArraySize = 1;
   desc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
@@ -93,36 +93,42 @@ D3d11RenderTarget::D3d11RenderTarget(ID3D11Device* dev, uint32_t width, uint32_t
   HRESULT hr = dev->CreateTexture2D(&desc, nullptr, &_buffer);
   _ComThrowIfError(hr);
 
-  InitResource(dev);
-}
-
-D3d11RenderTarget::D3d11RenderTarget(ID3D11Device* dev, IDXGISwapChain* swapchain) {
-  // 取得交换链后台缓冲。
-  HRESULT hr = swapchain->GetBuffer(0, __uuidof(ID3D11Texture2D), 
-      reinterpret_cast<void**>(_buffer.GetAddressOf()));
+  // 创建 RTV 资源。
+  hr = dev->CreateRenderTargetView(_buffer.Get(), nullptr, _view.GetAddressOf());
   _ComThrowIfError(hr);
 
   InitResource(dev);
 }
 
-void D3d11RenderTarget::InitResource(ID3D11Device* dev) {
-  HRESULT hr = S_OK;
+D3d11RenderTarget::D3d11RenderTarget(ID3D11Device* dev, IDXGISwapChain1* swapChain1) {
+  CreateRtv(dev, swapChain1);
+  InitResource(dev);
+}
+
+void D3d11RenderTarget::CreateRtv(ID3D11Device* dev, IDXGISwapChain1* swapChain1) {
+  // 取得交换链后台缓冲。
+  HRESULT hr = swapChain1->GetBuffer(0, IID_PPV_ARGS(&_buffer));
+  _ComThrowIfError(hr);
 
   D3D11_TEXTURE2D_DESC desc = {0};
   _buffer->GetDesc(&desc);
   _ThrowIfNot((desc.BindFlags & D3D11_BIND_RENDER_TARGET) != 0);
 
+  // 创建 RTV 资源。
+  hr = dev->CreateRenderTargetView(_buffer.Get(), nullptr, _view.GetAddressOf());
+  _ComThrowIfError(hr);
+
+  // 设置视口
   _viewport.Width = static_cast<float>(desc.Width);
   _viewport.Height = static_cast<float>(desc.Height);
   _viewport.MinDepth = D3D11_MIN_DEPTH;
   _viewport.MaxDepth = D3D11_MAX_DEPTH;
   _viewport.TopLeftX = 0;
   _viewport.TopLeftY = 0;
+}
 
-  // 将缓冲纹理设置为 RTV 资源。
-  hr = dev->CreateRenderTargetView(_buffer.Get(), nullptr, _view.GetAddressOf());
-  _ComThrowIfError(hr);
-
+void D3d11RenderTarget::InitResource(ID3D11Device* dev) {
+  HRESULT hr = S_OK;
 
   // 创建采样器
   {
@@ -158,9 +164,7 @@ void D3d11RenderTarget::InitResource(ID3D11Device* dev) {
 }
 
 void D3d11RenderTarget::Bind(ID3D11DeviceContext* ctx) {
-  ctx->OMSetRenderTargets(1, _view.GetAddressOf(), nullptr);
   ctx->RSSetViewports(1, &_viewport);
-
 
   ID3D11RenderTargetView* rtv[1] = {_view.Get()};
   ctx->OMSetRenderTargets(1, rtv, nullptr);
@@ -173,6 +177,12 @@ void D3d11RenderTarget::Bind(ID3D11DeviceContext* ctx) {
 }
 
 void D3d11RenderTarget::Unbind(ID3D11DeviceContext* ctx) {
+  ctx->OMSetRenderTargets(0, nullptr, nullptr);
+}
+
+void D3d11RenderTarget::ReleaseRtv(ID3D11DeviceContext* ctx) {
+  _view.Reset();
+  _buffer.Reset();
 }
 
 void D3d11RenderTarget::Clear(ID3D11DeviceContext* ctx, float red, float green, float blue, float alpha) {
@@ -353,7 +363,7 @@ void D3d11Triangle::Bind(ID3D11DeviceContext* ctx) {
   ctx->PSSetShader(_pixelShader.Get(), nullptr, 0);
 
   // TODO: Handle offset.
-  uint32_t offset = 0;
+  UINT offset = 0;
 
   ID3D11Buffer* buffers[] = {_buffer.Get()};
   UINT numBuffers = sizeof(buffers) / sizeof(buffers[0]);
@@ -374,7 +384,20 @@ struct QuadVertex {
   DirectX::XMFLOAT2 tex;
 };
 
-D3d11Quad::D3d11Quad(ID3D11Device* dev, uint32_t x, uint32_t y, uint32_t width, uint32_t height) {
+D3d11Quad::D3d11Quad(ID3D11Device* dev, UINT x, UINT y, UINT width, UINT height) {
+  CreatePixelShaderResource(dev, width, height);
+  InitResource(dev, x, y, width, height);
+}
+
+D3d11Quad::D3d11Quad(ID3D11Device* dev, ID3D11Texture2D* tex) {
+  _pixelShaderResource = tex;
+
+  D3D11_TEXTURE2D_DESC desc;
+  _pixelShaderResource->GetDesc(&desc);
+
+  InitResource(dev, 0, 0, desc.Width, desc.Height);
+}
+void D3d11Quad::CreatePixelShaderResource(ID3D11Device* dev, UINT width, UINT height) {
   // 创建着色器资源
   D3D11_TEXTURE2D_DESC desc;
   desc.ArraySize = 1;
@@ -391,25 +414,14 @@ D3d11Quad::D3d11Quad(ID3D11Device* dev, uint32_t x, uint32_t y, uint32_t width, 
 
   //D3D11_SUBRESOURCE_DATA srd;
   //srd.pSysMem = data;
-  //srd.SysMemPitch = static_cast<uint32_t>(row_stride);
+  //srd.SysMemPitch = static_cast<UINT>(row_stride);
   //srd.SysMemSlicePitch = 0;
 
-  HRESULT hr = dev->CreateTexture2D(&desc, nullptr, _pixelShaderResource.GetAddressOf());
+  HRESULT hr = dev->CreateTexture2D(&desc, nullptr, _pixelShaderResource.ReleaseAndGetAddressOf());
   _ComThrowIfError(hr);
-
-  InitResource(dev, x, y, width, height);
 }
 
-D3d11Quad::D3d11Quad(ID3D11Device* dev, ID3D11Texture2D* tex) {
-  _pixelShaderResource = tex;
-
-  D3D11_TEXTURE2D_DESC desc;
-  _pixelShaderResource->GetDesc(&desc);
-
-  InitResource(dev, 0, 0, desc.Width, desc.Height);
-}
-
-void D3d11Quad::InitResource(ID3D11Device* dev, uint32_t x, uint32_t y, uint32_t width, uint32_t height) {
+void D3d11Quad::InitResource(ID3D11Device* dev, UINT x, UINT y, UINT width, UINT height) {
   HRESULT hr = S_OK;
 
   D3D11_TEXTURE2D_DESC texDesc;
@@ -560,7 +572,7 @@ void D3d11Quad::Bind(ID3D11DeviceContext* ctx) {
   ctx->PSSetShaderResources(0, 1, views);
 
   // TODO: Handle offset.
-  uint32_t offset = 0;
+  UINT offset = 0;
 
   ID3D11Buffer* buffers[1] = {_buffer.Get()};
   ctx->IASetVertexBuffers(0, 1, buffers, &_stride, &offset);

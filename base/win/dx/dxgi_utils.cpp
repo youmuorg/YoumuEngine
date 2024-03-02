@@ -1,4 +1,4 @@
-#include "dxgi1_utils.h"
+#include "dxgi_utils.h"
 #include "../com_error.h"
 
 #include <mutex>
@@ -9,7 +9,27 @@ namespace dx {
 
 using namespace win;
 
-DxgiFactory::DxgiFactory() {
+DxgiFactory1::DxgiFactory1(const DxgiCreateParams& params) {
+  using CreateDxgiFactory1Proc = HRESULT (WINAPI) (REFIID riid, void **ppFactory);
+
+  static std::once_flag loadFlag;
+  static CreateDxgiFactory1Proc* createDxgiFactory1 = nullptr;
+
+  std::call_once(loadFlag, []() -> void {
+    HMODULE lib = ::LoadLibraryW(L"dxgi.dll");
+    _ApiThrowIfNot("LoadLibraryW", lib != NULL);
+
+    createDxgiFactory1 = 
+        reinterpret_cast<CreateDxgiFactory1Proc*>(
+            ::GetProcAddress(lib, "CreateDXGIFactory1"));
+  });
+  _ThrowIfNot(createDxgiFactory1 == nullptr);
+
+  HRESULT hr = createDxgiFactory1(IID_PPV_ARGS(&_factory1));
+  _ComThrowIfError(hr);
+}
+
+DxgiFactory4::DxgiFactory4() {
   using CreateDxgiFactory2Proc = HRESULT (WINAPI) (UINT flags, REFIID riid, void **ppFactory);
 
   static std::once_flag loadFlag;
@@ -25,24 +45,29 @@ DxgiFactory::DxgiFactory() {
   });
   _ThrowIfNot(createDxgiFactory2 == nullptr);
 
-  IDXGIFactory* fac = nullptr;
-  HRESULT hr = createDxgiFactory2(0, __uuidof(IDXGIFactory1), reinterpret_cast<void**>(_factory.GetAddressOf()));
+  UINT flags = 0;
+#if defined(_DEBUG)
+  flags |= DXGI_CREATE_FACTORY_DEBUG;
+#endif
+
+  HRESULT hr = createDxgiFactory2(flags, IID_PPV_ARGS(&_factory4));
   _ComThrowIfError(hr);
+
+  _factory4.As(&_factory1);
 }
 
 DxgiDevice::DxgiDevice(IUnknown* d3dDevice, HWND windowHandle) {
-  HRESULT hr = d3dDevice->QueryInterface(__uuidof(IDXGIDevice), reinterpret_cast<void**>(_device.GetAddressOf()));
+  HRESULT hr = d3dDevice->QueryInterface(IID_PPV_ARGS(&_device));
   _ComThrowIfError(hr);
 
   hr = _device->GetAdapter(_adapter.GetAddressOf());
   _ComThrowIfError(hr);
 
   ComPtr<IDXGIFactory1> factory1;
-  hr = _adapter->GetParent(__uuidof(IDXGIFactory1), 
-      reinterpret_cast<void**>(factory1.GetAddressOf()));
+  hr = _adapter->GetParent(IID_PPV_ARGS(&factory1));
   _ComThrowIfError(hr);
 
-  hr = factory1.As(&_factory);
+  hr = factory1.As(&_factory2);
   _ComThrowIfError(hr);
 
   RECT rect;
@@ -66,8 +91,17 @@ DxgiDevice::DxgiDevice(IUnknown* d3dDevice, HWND windowHandle) {
   swapchain_desc.AlphaMode = DXGI_ALPHA_MODE_PREMULTIPLIED;
   swapchain_desc.Flags = 0;
   swapchain_desc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
-  hr = _factory->CreateSwapChainForHwnd(d3dDevice, windowHandle, 
-      &swapchain_desc, nullptr, nullptr, _swapchain.GetAddressOf());
+  hr = _factory2->CreateSwapChainForHwnd(d3dDevice, windowHandle, 
+      &swapchain_desc, nullptr, nullptr, _swapChain1.GetAddressOf());
+  _ComThrowIfError(hr);
+
+  // 禁用全屏快捷键
+  hr = factory1->MakeWindowAssociation(windowHandle, DXGI_MWA_NO_ALT_ENTER);
+  _ComThrowIfError(hr);
+}
+
+void DxgiDevice::Resize(UINT width, UINT height) {
+  HRESULT hr = _swapChain1->ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
   _ComThrowIfError(hr);
 }
 
@@ -76,7 +110,8 @@ void DxgiDevice::Clear() {
 }
 
 void DxgiDevice::Present() {
-  _swapchain->Present(1, 0);
+  HRESULT hr = _swapChain1->Present(1, 0);
+  _ComThrowIfError(hr);
 }
 
 DxgiDuplication::DxgiDuplication(IUnknown* d3dDevice, IDXGIAdapter* adapter) {

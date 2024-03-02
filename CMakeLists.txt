@@ -41,4 +41,4 @@ endif()
 # Sub project settings
 # ===
 add_subdirectory("base")
-add_subdirectory("editor")
+#add_subdirectory("editor")

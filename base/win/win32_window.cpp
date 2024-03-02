@@ -125,15 +125,23 @@ bool Win32Window::ProcessWindowMessage(HWND hwnd, UINT msg, WPARAM wparam, LPARA
     bhandle = this->OnCreate(wparam, lparam, lresult);
     break;
   case WM_SIZING:
+    break;
   case WM_SIZE:
     {
-      RECT rc{0};
-      ::GetClientRect(_hwnd, &rc);
-      _clientWidth = rc.right - rc.left;
-      _clientHeight = rc.bottom - rc.top;
-      bhandle = this->OnResize(wparam, lparam, lresult);
+      _clientWidth = LOWORD(lparam);
+      _clientHeight = HIWORD(lparam);
+      this->OnResize(_clientWidth, _clientHeight);
     }
+    return 0;
+  case WM_MOVING:
     break;
+  case WM_MOVE:
+    {
+      INT nonClientX = LOWORD(lparam);
+      INT nonClientY = HIWORD(lparam);
+      this->OnMove(nonClientX, nonClientY);
+    }
+    return 0;
   case WM_PAINT: 
     // 客户区更新请求
     bhandle = this->OnPaint(wparam, lparam, lresult);

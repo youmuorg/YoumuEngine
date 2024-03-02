@@ -30,14 +30,17 @@ private:
 class D3d11RenderTarget {
 public:
   // 从交换链后台缓存建立渲染目标
-  D3d11RenderTarget(ID3D11Device* dev, IDXGISwapChain* swapchain);
+  D3d11RenderTarget(ID3D11Device* dev, IDXGISwapChain1* swapChain1);
 
   // 直接创建纹理目标
-  D3d11RenderTarget(ID3D11Device* dev, uint32_t width, uint32_t height);
+  D3d11RenderTarget(ID3D11Device* dev, UINT width, UINT height);
 
   void Bind(ID3D11DeviceContext* ctx);
   void Unbind(ID3D11DeviceContext* ctx);
   void Clear(ID3D11DeviceContext* ctx, float red, float green, float blue, float alpha);
+  
+  void CreateRtv(ID3D11Device* dev, IDXGISwapChain1* swapChain1);
+  void ReleaseRtv(ID3D11DeviceContext* ctx);
 
   ID3D11Texture2D* buffer() { return _buffer.Get(); }
 
@@ -94,8 +97,8 @@ public:
 private:
   ComPtr<ID3D11Buffer> _buffer;
   D3D_PRIMITIVE_TOPOLOGY _primitive = D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
-  uint32_t _vertices = 0;
-  uint32_t _stride = 0;
+  UINT _vertices = 0;
+  UINT _stride = 0;
 
   ComPtr<ID3DBlob> _vertexBlob;
   ComPtr<ID3D11VertexShader> _vertexShader;
@@ -107,18 +110,18 @@ private:
 // 一个四边形
 class D3d11Quad {
 public:
-  D3d11Quad(ID3D11Device* dev, uint32_t x, uint32_t y, uint32_t width, uint32_t height);
+  D3d11Quad(ID3D11Device* dev, UINT x, UINT y, UINT width, UINT height);
   D3d11Quad(ID3D11Device* dev, ID3D11Texture2D* tex);
 
   void Bind(ID3D11DeviceContext* ctx);
   void Unbind(ID3D11DeviceContext* ctx);
   void Draw(ID3D11DeviceContext* ctx);
-
+  void CreatePixelShaderResource(ID3D11Device* dev, UINT width, UINT height);
 
   ID3D11Texture2D* texture() { return _pixelShaderResource.Get(); }
 
 private:
-  void InitResource(ID3D11Device* dev, uint32_t x, uint32_t y, uint32_t width, uint32_t height);
+  void InitResource(ID3D11Device* dev, UINT x, UINT y, UINT width, UINT height);
 
 private:
   float _x = 0.0f;
@@ -129,8 +132,8 @@ private:
 
   ComPtr<ID3D11Buffer> _buffer;
   D3D_PRIMITIVE_TOPOLOGY _primitive = D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
-  uint32_t _vertices = 0;
-  uint32_t _stride = 0;
+  UINT _vertices = 0;
+  UINT _stride = 0;
 
   ComPtr<ID3DBlob> _vertexBlob;
   ComPtr<ID3D11VertexShader> _vertexShader;

@@ -28,15 +28,36 @@ D3d11Window::D3d11Window()
   : Win32Window(overlappedWindow),
     _d3d11Device(),
     _dxgiDevice(_d3d11Device.device(), handle()),
-    _d3d11RenderTarget(_d3d11Device.device(), _dxgiDevice.swapchain()) {
+    _d3d11RenderTarget(_d3d11Device.device(), _dxgiDevice.swapChain1()) {
   _triangle = std::make_unique<D3d11Triangle>(_d3d11Device.device());
 }
 
-bool D3d11Window::OnResize(WPARAM wparam, LPARAM lparam, LRESULT& lresult) {
-  Paint();
+void D3d11Window::OnResize(UINT width, UINT height) {
+  if (width == 0 || height == 0) {
+    return;
+  }
 
-  lresult = 0;
-  return true;
+  _d3d11RenderTarget.Unbind(_d3d11Device.context());
+  _d3d11RenderTarget.ReleaseRtv(_d3d11Device.context());
+  _dxgiDevice.Resize(width, height);
+  _d3d11RenderTarget.CreateRtv(_d3d11Device.device(), _dxgiDevice.swapChain1());
+  _d3d11RenderTarget.Bind(_d3d11Device.context());
+
+  _quad = std::make_unique<D3d11Quad>(
+      _d3d11Device.device(), 
+      0, 
+      0, 
+      static_cast<uint32_t>(clientWidth()), 
+      static_cast<uint32_t>(clientHeight()));
+
+  //Paint();
+  Capture();
+  Render();
+}
+
+void D3d11Window::OnMove(INT x, INT y) {
+  Capture();
+  Render();
 }
 
 void D3d11Window::Paint() {
@@ -79,12 +100,14 @@ void D3d11Window::Capture() {
     _duplication = std::make_unique<DxgiDuplication>(_d3d11Device.device(), _dxgiDevice.adapter());
   }
 
-  _quad = std::make_unique<D3d11Quad>(
-      _d3d11Device.device(), 
-      0, 
-      0, 
-      static_cast<uint32_t>(clientWidth()), 
-      static_cast<uint32_t>(clientHeight()));
+  if (!_quad) {
+    _quad = std::make_unique<D3d11Quad>(
+        _d3d11Device.device(), 
+        0, 
+        0, 
+        static_cast<uint32_t>(clientWidth()), 
+        static_cast<uint32_t>(clientHeight()));
+  }
 
   _duplication->AcquireFrame();
 

@@ -6,26 +6,12 @@
 #include <iostream>
 #include <sstream>
 
-using namespace std::chrono_literals;
-
 namespace base {
 namespace win {
 namespace dx {
 
-bool _FpsCounter::Update() {
-  auto now = std::chrono::high_resolution_clock::now();
-  auto _durationUpdate = now - _lastUpdate;
-  bool needUpdate = _durationUpdate > 1s;
-  if (needUpdate) {
-    _fps = static_cast<float>(_count) / _durationUpdate.count() * 1e9;
-    _count = 0;
-    _lastUpdate = now;
-  }
-  return needUpdate;
-}
-
 D3d12Window::D3d12Window()
-  : Win32Window(overlappedWindow),
+  : Win32Window(overlappedWindowProperties),
     _dxgiFactory4(),
     _device(_dxgiFactory4.factory4()),
     _dxgiDevice(_device.device(), handle()),

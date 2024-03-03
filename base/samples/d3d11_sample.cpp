@@ -1,4 +1,4 @@
-#include <base/win/message_queue.h>
+#include <base/win/message_loop.h>
 #include <base/win/dx/d3d11_utils.h>
 #include <base/win/dx/dxgi_utils.h>
 #include <base/win/dx/d3d11_window.h>
@@ -23,7 +23,7 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int) {
     //wnd.Paint();
     //wnd.Capture();
 
-    win::MessageQueue mq;
+    win::MessageLoop mq;
     while(1) {
       while(mq.Dispatch()){}
       try {

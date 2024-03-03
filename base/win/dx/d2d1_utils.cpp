@@ -1,8 +1,7 @@
 #include "d2d1_utils.h"
-#include "../com_error.h"
+#include "d2d1_compositor.h"
 
 #include <mutex>
-
 
 namespace base {
 namespace win {
@@ -34,6 +33,21 @@ D2d1Factory::D2d1Factory() {
       nullptr,
       &_factory);
   _ComThrowIfError(hr);
+}
+
+D2d1Device::D2d1Device(ID2D1Factory1* factory, IDXGIDevice* dxgiDevice) {
+  HRESULT hr = factory->CreateDevice(dxgiDevice, &_device);
+  _ComThrowIfError(hr);
+  hr = _device->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE, &_context);
+  _ComThrowIfError(hr);
+}
+
+void D2d1Device::Clear() {
+
+}
+
+D2d1RenderTarget::D2d1RenderTarget(ID2D1DeviceContext* context) {
+  _renderTarget = context;
 }
 
 D2d1RenderTarget::D2d1RenderTarget(

@@ -70,15 +70,17 @@ DxgiDevice::DxgiDevice(IUnknown* d3dDevice, HWND windowHandle) {
   hr = factory1.As(&_factory2);
   _ComThrowIfError(hr);
 
-  RECT rect;
-  memset(&rect, 0, sizeof(rect));
-  ::GetClientRect(windowHandle, &rect);
-  int width = rect.right - rect.left;
-  int height = rect.bottom - rect.top;
+  // RECT rect;
+  // memset(&rect, 0, sizeof(rect));
+  // ::GetClientRect(windowHandle, &rect);
+  // int width = rect.right - rect.left;
+  // int height = rect.bottom - rect.top;
 
   DXGI_SWAP_CHAIN_DESC1 swapchain_desc = {0};
-  swapchain_desc.Width = static_cast<UINT>(width);
-  swapchain_desc.Height = static_cast<UINT>(height);
+
+  // 使用窗口size
+  // swapchain_desc.Width = static_cast<UINT>(width);
+  // swapchain_desc.Height = static_cast<UINT>(height);
   swapchain_desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
   swapchain_desc.Stereo = FALSE;
   swapchain_desc.SampleDesc.Count = 1;

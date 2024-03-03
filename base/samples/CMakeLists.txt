@@ -11,3 +11,10 @@ add_executable(
 )
 target_include_directories(d3d12_sample PRIVATE "${CMAKE_CURRENT_LIST_DIR}")
 target_link_libraries(d3d12_sample PRIVATE base_win base_win_dx)
+
+add_executable(
+  d2d1_sample WIN32
+  "d2d1_sample.cpp"
+)
+target_include_directories(d2d1_sample PRIVATE "${CMAKE_CURRENT_LIST_DIR}")
+target_link_libraries(d2d1_sample PRIVATE base_win base_win_dx)

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <windows.h>
+#include "win32_base.h"
 
 #include <atomic>
 
@@ -12,8 +12,10 @@ struct Message {
 
 };
 
-class MessageQueue {
+// 窗口线程消息循环
+class MessageLoop {
 public:
+  int Run();
   bool Dispatch();
   bool IsEmpty();
   bool IsNotEmpty() { return !IsEmpty(); }

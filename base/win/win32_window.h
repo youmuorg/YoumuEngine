@@ -1,13 +1,13 @@
 #pragma once
 
-#include <windows.h>
+#include "win32_base.h"
 
 namespace base {
 namespace win {
 
 LRESULT CALLBACK _WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
 
-struct OverlappedWindowParams{
+struct WindowProperties{
   DWORD exStyle = 0;
   DWORD style = WS_OVERLAPPEDWINDOW;
   int x = CW_USEDEFAULT;
@@ -18,11 +18,11 @@ struct OverlappedWindowParams{
   HINSTANCE hinst = NULL;
 };
 
-constexpr OverlappedWindowParams overlappedWindow;
+constexpr WindowProperties overlappedWindowProperties;
 
 class Win32Window {
 public:
-  Win32Window(const OverlappedWindowParams& params);
+  Win32Window(const WindowProperties& props);
 
   void SetTitle(const wchar_t* title);
   void Close();
@@ -46,6 +46,7 @@ private:
   HWND _hwnd = NULL;
   int _clientWidth = 0;
   int _clientHeight = 0;
+  bool _quitAfterClosed = true;
 
   friend LRESULT _WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
 };

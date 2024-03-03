@@ -3,6 +3,7 @@
 #include "../win32_window.h"
 #include "d3d12_utils.h"
 #include "dxgi_utils.h"
+#include "dx_utils.h"
 
 #include <chrono>
 #include <memory>
@@ -10,19 +11,6 @@
 namespace base {
 namespace win {
 namespace dx {
-
-class _FpsCounter {
-public:
-  void Inc() { _count++; };
-  bool Update();
-  float Fps() { return _fps; };
-
-private:
-  float _fps = 0.0f;
-  int _count = 0;
-  std::chrono::high_resolution_clock::time_point _lastUpdate = std::chrono::high_resolution_clock::now();
-  std::chrono::high_resolution_clock::duration _durationUpdate;
-};
 
 class D3d12Window : public Win32Window {
 public:
@@ -45,7 +33,7 @@ private:
   //std::unique_ptr<D3d11Triangle> _triangle;
   std::unique_ptr<DxgiDuplication> _duplication;
 
-  _FpsCounter _fpsCounter;
+  FpsCounter _fpsCounter;
 };
 
 } // namespace dx

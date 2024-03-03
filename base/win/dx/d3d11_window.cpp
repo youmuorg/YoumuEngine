@@ -6,30 +6,16 @@
 #include <iostream>
 #include <sstream>
 
-using namespace std::chrono_literals;
-
 namespace base {
 namespace win {
 namespace dx {
 
-bool _FpsCounter::Update() {
-  auto now = std::chrono::high_resolution_clock::now();
-  auto _durationUpdate = now - _lastUpdate;
-  bool needUpdate = _durationUpdate > 1s;
-  if (needUpdate) {
-    _fps = static_cast<float>(_count) / _durationUpdate.count() * 1e9;
-    _count = 0;
-    _lastUpdate = now;
-  }
-  return needUpdate;
-}
-
 D3d11Window::D3d11Window()
-  : Win32Window(overlappedWindow),
-    _d3d11Device(),
-    _dxgiDevice(_d3d11Device.device(), handle()),
-    _d3d11RenderTarget(_d3d11Device.device(), _dxgiDevice.swapChain1()) {
-  _triangle = std::make_unique<D3d11Triangle>(_d3d11Device.device());
+  : Win32Window(overlappedWindowProperties) {
+  _d3d11Device = std::make_unique<D3d11Device>();
+  _dxgiDevice = std::make_unique<DxgiDevice>(_d3d11Device->device(), handle());
+  _d3d11RenderTarget = std::make_unique<D3d11RenderTarget>(_d3d11Device->device(), _dxgiDevice->swapChain1());
+  _triangle = std::make_unique<D3d11Triangle>(_d3d11Device->device());
 }
 
 void D3d11Window::OnResize(UINT width, UINT height) {
@@ -37,33 +23,32 @@ void D3d11Window::OnResize(UINT width, UINT height) {
     return;
   }
 
-  _d3d11RenderTarget.Unbind(_d3d11Device.context());
-  _d3d11RenderTarget.ReleaseRtv(_d3d11Device.context());
-  _dxgiDevice.Resize(width, height);
-  _d3d11RenderTarget.CreateRtv(_d3d11Device.device(), _dxgiDevice.swapChain1());
-  _d3d11RenderTarget.Bind(_d3d11Device.context());
+  _d3d11RenderTarget->Unbind(_d3d11Device->context());
+  _d3d11RenderTarget->ReleaseRtv(_d3d11Device->context());
+  _dxgiDevice->Resize(width, height);
+  _d3d11RenderTarget->CreateRtv(_d3d11Device->device(), _dxgiDevice->swapChain1());
+  _d3d11RenderTarget->Bind(_d3d11Device->context());
 
   _quad = std::make_unique<D3d11Quad>(
-      _d3d11Device.device(), 
+      _d3d11Device->device(), 
       0, 
       0, 
       static_cast<uint32_t>(clientWidth()), 
       static_cast<uint32_t>(clientHeight()));
 
-  //Paint();
-  Capture();
-  Render();
+  // Capture();
+  // Render();
 }
 
 void D3d11Window::OnMove(INT x, INT y) {
-  Capture();
-  Render();
+  // Capture();
+  // Render();
 }
 
 void D3d11Window::Paint() {
   HRESULT hr = S_OK;
 
-  dx::D3d11RenderTarget target(_d3d11Device.device(), clientWidth(), clientHeight());
+  dx::D3d11RenderTarget target(_d3d11Device->device(), clientWidth(), clientHeight());
   dx::ComPtr<IDXGISurface> surface;
   target.buffer()->QueryInterface(__uuidof(IDXGISurface), &surface);
   dx::D2d1Factory d2d1Factory;
@@ -76,11 +61,11 @@ void D3d11Window::Paint() {
   d2d1RenderTarget.End();
 
   _quad = std::make_unique<D3d11Quad>(
-      _d3d11Device.device(),
+      _d3d11Device->device(),
       target.buffer());
 
   //DirectX::ScratchImage image;
-  //hr = DirectX::CaptureTexture(_d3d11Device.device(), _d3d11Device.context(), _quad->texture(), image);
+  //hr = DirectX::CaptureTexture(_d3d11Device->device(), _d3d11Device->context(), _quad->texture(), image);
   //dx::_ComThrowIfError(hr);
 
   //hr = DirectX::SaveToWICFile(
@@ -97,12 +82,12 @@ void D3d11Window::Capture() {
   HRESULT hr = S_OK;
 
   if (!_duplication) {
-    _duplication = std::make_unique<DxgiDuplication>(_d3d11Device.device(), _dxgiDevice.adapter());
+    _duplication = std::make_unique<DxgiDuplication>(_d3d11Device->device(), _dxgiDevice->adapter());
   }
 
   if (!_quad) {
     _quad = std::make_unique<D3d11Quad>(
-        _d3d11Device.device(), 
+        _d3d11Device->device(), 
         0, 
         0, 
         static_cast<uint32_t>(clientWidth()), 
@@ -117,7 +102,7 @@ void D3d11Window::Capture() {
     dx::_ComThrowIfError(hr);
 
     //DirectX::ScratchImage image;
-    //hr = DirectX::CaptureTexture(_d3d11Device.device(), _d3d11Device.context(), frameData.Frame, image);
+    //hr = DirectX::CaptureTexture(_d3d11Device->device(), _d3d11Device->context(), frameData.Frame, image);
     //dx::_ComThrowIfError(hr);
 
     //hr = DirectX::SaveToWICFile(
@@ -136,23 +121,25 @@ void D3d11Window::Capture() {
     srcRegion.bottom = clientHeight();
     srcRegion.front = 0;
     srcRegion.back = 1;
-    _d3d11Device.context()->CopySubresourceRegion(_quad->texture(), 0, 0, 0, 0, acquireFrame.Get(), 0, &srcRegion);
+    _d3d11Device->context()->CopySubresourceRegion(_quad->texture(), 0, 0, 0, 0, acquireFrame.Get(), 0, &srcRegion);
   }
 
   _duplication->ReleaseFrame();
 }
 
 void D3d11Window::Render() {
-  _d3d11RenderTarget.Bind(_d3d11Device.context());
-  _quad->Bind(_d3d11Device.context());
-  //_triangle->Bind(_d3d11Device.context());
+  _d3d11RenderTarget->Bind(_d3d11Device->context());
+  _quad->Bind(_d3d11Device->context());
+  //_triangle->Bind(_d3d11Device->context());
 
-  _d3d11RenderTarget.Clear(_d3d11Device.context(), 0.5f, 0.5f, 1.0f, 1.0f);
+  _d3d11RenderTarget->Clear(_d3d11Device->context(), 0.5f, 0.5f, 1.0f, 1.0f);
 
-  _quad->Draw(_d3d11Device.context());
-  //_triangle->Draw(_d3d11Device.context());
+  _quad->Draw(_d3d11Device->context());
+  //_triangle->Draw(_d3d11Device->context());
+}
 
-  _dxgiDevice.Present();
+void D3d11Window::Present() {
+  _dxgiDevice->Present();
 
   _fpsCounter.Inc();
   if (_fpsCounter.Update()) {
@@ -163,7 +150,6 @@ void D3d11Window::Render() {
     ss << "FPS: " << _fpsCounter.Fps();
     SetTitle(ss.str().c_str());
   }
-
 }
 
 } // namespace dx

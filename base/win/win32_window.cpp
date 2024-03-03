@@ -64,8 +64,8 @@ ATOM _RegisterOverlappedWindowClass(HINSTANCE hinst) {
   return atom;
 }
 
-Win32Window::Win32Window(const OverlappedWindowParams& params) {
-  HINSTANCE hinst = params.hinst;
+Win32Window::Win32Window(const WindowProperties& props) {
+  HINSTANCE hinst = props.hinst;
   if (hinst == NULL) {
     hinst = ::GetModuleHandleW(nullptr);
   }
@@ -74,16 +74,16 @@ Win32Window::Win32Window(const OverlappedWindowParams& params) {
   std::call_once(registerFlag, _RegisterOverlappedWindowClass, hinst);
 
   ::CreateWindowExW(
-      params.exStyle,
+      props.exStyle,
       _kBaseOverlappedWindowClassName,
       _kBaseOverlappedWindowName,
-      params.style,
-      params.x,
-      params.y,
-      params.width,
-      params.height,
+      props.style,
+      props.x,
+      props.y,
+      props.width,
+      props.height,
       HWND_DESKTOP,
-      params.hmenu,
+      props.hmenu,
       hinst,
       reinterpret_cast<void*>(this));
   _ApiCheckIfNot("CreateWindowExW", _hwnd != NULL);
@@ -149,6 +149,9 @@ bool Win32Window::ProcessWindowMessage(HWND hwnd, UINT msg, WPARAM wparam, LPARA
   case WM_DESTROY:
     // 客户区销毁
     bhandle = this->OnDestroy(wparam, lparam, lresult);
+    if (_quitAfterClosed) {
+      ::PostQuitMessage(0);
+    }
     break;
   case WM_NCDESTROY:
     // 非客户区销毁

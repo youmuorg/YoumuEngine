@@ -48,6 +48,7 @@ public:
   void Clear();
   void Present();
 
+  IDXGIDevice* device() { return _device.Get(); }
   IDXGIAdapter* adapter() { return _adapter.Get(); }
   IDXGISwapChain1* swapChain1() { return _swapChain1.Get(); }
 

@@ -14,9 +14,11 @@ D3d12Window::D3d12Window()
   : Win32Window(overlappedWindowProperties),
     _dxgiFactory4(),
     _device(_dxgiFactory4.factory4()),
-    _dxgiDevice(_device.device(), handle()),
+    _dxgiDevice(_dxgiFactory4.factory4(), _device.commandQueue(), handle()),
     _pipeline(_device.device(), _dxgiDevice.swapChain1(), d3d12PipelineDefaultConfig) {
   //_triangle = std::make_unique<D3d11Triangle>(_d3d11Device.device());
+
+  _frameIndex = _dxgiDevice.swapChain3()->GetCurrentBackBufferIndex();
 }
 
 void D3d12Window::OnResize(UINT width, UINT height) {
@@ -38,12 +40,10 @@ void D3d12Window::OnResize(UINT width, UINT height) {
   //    static_cast<uint32_t>(clientHeight()));
 
   //Paint();
-  Capture();
   Render();
 }
 
 void D3d12Window::OnMove(INT x, INT y) {
-  Capture();
   Render();
 }
 
@@ -78,55 +78,6 @@ void D3d12Window::Paint() {
   //    L"D:\\Temp\\t.png",
   //    &GUID_WICPixelFormat32bppBGRA);
   //dx::_ComThrowIfError(hr);
-}
-
-void D3d12Window::Capture() {
-  HRESULT hr = S_OK;
-
-  if (!_duplication) {
-    _duplication = std::make_unique<DxgiDuplication>(_device.device(), _dxgiDevice.adapter());
-  }
-
-  //if (!_quad) {
-  //  _quad = std::make_unique<D3d11Quad>(
-  //      _d3d11Device.device(), 
-  //      0, 
-  //      0, 
-  //      static_cast<uint32_t>(clientWidth()), 
-  //      static_cast<uint32_t>(clientHeight()));
-  //}
-
-  _duplication->AcquireFrame();
-
-  if (_duplication->frame()) {
-    dx::ComPtr<ID3D12Resource> acquireFrame;
-    hr = _duplication->frame()->QueryInterface(__uuidof(ID3D12Resource), &acquireFrame);
-    dx::_ComThrowIfError(hr);
-
-    //DirectX::ScratchImage image;
-    //hr = DirectX::CaptureTexture(_d3d11Device.device(), _d3d11Device.context(), frameData.Frame, image);
-    //dx::_ComThrowIfError(hr);
-
-    //hr = DirectX::SaveToWICFile(
-    //    image.GetImages(),
-    //    image.GetImageCount(),
-    //    DirectX::WIC_FLAGS_NONE,
-    //    GUID_ContainerFormatPng, 
-    //    L"D:\\Temp\\t.png",
-    //    &GUID_WICPixelFormat32bppBGRA);
-    //dx::_ComThrowIfError(hr);
-
-    //D3D11_BOX srcRegion{0};
-    //srcRegion.left = 0;
-    //srcRegion.top = 0;
-    //srcRegion.right = clientWidth();
-    //srcRegion.bottom = clientHeight();
-    //srcRegion.front = 0;
-    //srcRegion.back = 1;
-    //_d3d11Device.context()->CopySubresourceRegion(_quad->texture(), 0, 0, 0, 0, acquireFrame.Get(), 0, &srcRegion);
-  }
-
-  _duplication->ReleaseFrame();
 }
 
 void D3d12Window::Render() {

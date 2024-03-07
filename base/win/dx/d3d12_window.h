@@ -16,7 +16,6 @@ class D3d12Window : public Win32Window {
 public:
   D3d12Window();
 
-  void Capture();
   void Paint();
   void Render();
 
@@ -29,6 +28,9 @@ private:
   D3d12Device _device;
   DxgiDevice _dxgiDevice;
   D3d12Pipeline _pipeline;
+
+  // 交换链缓冲索引
+  uint32_t _frameIndex = 0;
   //std::unique_ptr<D3d11Quad> _quad;
   //std::unique_ptr<D3d11Triangle> _triangle;
   std::unique_ptr<DxgiDuplication> _duplication;

@@ -25,6 +25,7 @@ public:
   D3d12Device(IDXGIFactory4* dxgiFactory4);
 
   ID3D12Device* device() { return _device.Get(); }
+  ID3D12CommandQueue* commandQueue() { return _commandQueue.Get(); }
 
 private:
   ComPtr<ID3D12Device> _device;

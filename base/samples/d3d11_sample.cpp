@@ -29,6 +29,7 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int) {
       try {
         wnd.Capture();
         wnd.Render();
+        wnd.Present();
       } catch (win::ComError error) {
         std::cout 
           << "[" << error.sourceLocation().file_name()

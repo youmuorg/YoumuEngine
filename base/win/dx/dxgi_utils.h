@@ -43,6 +43,7 @@ class DxgiDevice {
 public:
   // 从窗口创建交换链
   DxgiDevice(IUnknown* d3dDevice, HWND windowHandle);
+  DxgiDevice(IDXGIFactory2* factory2, IUnknown* d3dDevice, HWND windowHandle);
 
   void Resize(UINT width, UINT height);
   void Clear();
@@ -51,12 +52,13 @@ public:
   IDXGIDevice* device() { return _device.Get(); }
   IDXGIAdapter* adapter() { return _adapter.Get(); }
   IDXGISwapChain1* swapChain1() { return _swapChain1.Get(); }
+  IDXGISwapChain3* swapChain3() { return _swapChain3.Get(); }
 
 private:
   ComPtr<IDXGIDevice> _device;
   ComPtr<IDXGIAdapter> _adapter;
-  ComPtr<IDXGIFactory2> _factory2;
   ComPtr<IDXGISwapChain1> _swapChain1;
+  ComPtr<IDXGISwapChain3> _swapChain3;
 };
 
 class DxgiDuplication {
@@ -73,6 +75,6 @@ private:
   ComPtr<IDXGIResource> _frame;
 };
 
-} // namespace dx
+}  // namespace dx
 } // namespace win
 } // namespace base

@@ -1,0 +1,29 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "d3d11_sample",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/base/samples/Debug/d3d11_sample.exe",
+      "cwd": "${fileDirname}",
+    },
+    {
+      "name": "d3d12_sample",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/base/samples/Debug/d3d12_sample.exe",
+      "cwd": "${fileDirname}",
+    },
+    {
+      "name": "d2d1_sample",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/base/samples/Debug/d2d1_sample.exe",
+      "cwd": "${fileDirname}",
+    },
+  ]
+}

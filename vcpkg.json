@@ -4,6 +4,7 @@
   "dependencies": [
     "gtest",
     "libunifex",
-    "directxtex"
+    "directxtex",
+    "directx-headers"
   ]
 }

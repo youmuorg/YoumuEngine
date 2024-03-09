@@ -12,7 +12,7 @@ namespace dx {
 D3d11Window::D3d11Window() {
   this->CreateOverlappedWindow();
   _d3d11Device = std::make_unique<D3d11Device>();
-  _dxgiDevice = std::make_unique<DxgiDevice>(_d3d11Device->device(), handle());
+  _dxgiDevice = std::make_unique<DxgiDeviceUtils>(_d3d11Device->device(), handle());
   _d3d11RenderTarget = std::make_unique<D3d11RenderTarget>(_d3d11Device->device(), _dxgiDevice->swapChain1());
   _triangle = std::make_unique<D3d11Triangle>(_d3d11Device->device());
 }

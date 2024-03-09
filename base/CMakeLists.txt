@@ -12,13 +12,17 @@ file(GLOB BASE_DX_SOURCES "dx/*.cpp")
 file(GLOB BASE_DX_HEADERS "dx/*.h")
 set(BASE_DX_LIB base_dx)
 
-find_package(directxtex CONFIG REQUIRED)
 
 add_library(${BASE_DX_LIB} STATIC
   ${BASE_DX_SOURCES}
   ${BASE_DX_HEADERS}
 )
+find_package(directxtex CONFIG REQUIRED)
 target_link_libraries(${BASE_DX_LIB} PRIVATE Microsoft::DirectXTex)
+
+find_package(directx-headers CONFIG REQUIRED)
+target_link_libraries(${BASE_DX_LIB} PUBLIC Microsoft::DirectX-Guids Microsoft::DirectX-Headers)
+
 target_link_libraries(${BASE_DX_LIB} PUBLIC base_win)
 
 add_subdirectory("samples")

@@ -9,15 +9,20 @@
 namespace base {
 namespace dx {
 
-D3d12Window::D3d12Window() {
-    this->CreateOverlappedWindow();
-    _dxgiFactory4 = std::make_unique<DxgiFactory4>();
-    _device = std::make_unique<D3d12Device>(_dxgiFactory4->factory4());
-    _dxgiDevice = std::make_unique<DxgiDevice>(_dxgiFactory4->factory4(), _device->commandQueue(), handle());
-    _pipeline = std::make_unique<D3d12Pipeline>(_device->device(), _dxgiDevice->swapChain1(), d3d12PipelineDefaultConfig);
-  //_triangle = std::make_unique<D3d11Triangle>(_d3d11Device.device());
+void D3d12Window::Initialize() {
+    _dxgiDevice.CreateFactory6();
+    _d3d12Device.CreateDevice(_dxgiDevice.factory1());
+    _d3d12Device.CreateCommandQueue();
 
-  _frameIndex = _dxgiDevice->swapChain3()->GetCurrentBackBufferIndex();
+    CreateOverlappedWindow();
+
+    _d3d12Device.CreateSwapchainForHwnd(_dxgiDevice.factory2(), handle());
+    _d3d12Device.CreateDescriptorHeaps();
+    _d3d12Device.CreateFence();
+    _d3d12Device.CreateRtv();
+
+    Render();
+    Show();
 }
 
 void D3d12Window::OnResize(UINT width, UINT height) {
@@ -25,20 +30,6 @@ void D3d12Window::OnResize(UINT width, UINT height) {
     return;
   }
 
-  //_pipeline.Unbind(_d3d11Device.context());
-  //_pipeline.ReleaseRtv(_d3d11Device.context());
-  //_dxgiDevice.Resize(width, height);
-  //_pipeline.CreateRtv(_d3d11Device.device(), _dxgiDevice.swapChain1());
-  //_pipeline.Bind(_d3d11Device.context());
-
-  //_quad = std::make_unique<D3d11Quad>(
-  //    _d3d11Device.device(), 
-  //    0, 
-  //    0, 
-  //    static_cast<uint32_t>(clientWidth()), 
-  //    static_cast<uint32_t>(clientHeight()));
-
-  //Paint();
   Render();
 }
 
@@ -80,26 +71,20 @@ void D3d12Window::Paint() {
 }
 
 void D3d12Window::Render() {
-  //_pipeline.Bind(_device.context());
-  //_quad->Bind(_device.context());
-  //_triangle->Bind(_d3d11Device.context());
+  _d3d12Device.PopulateCommandList();
+  _d3d12Device.ExecuteCommandList();
+  _d3d12Device.Present();
+  _d3d12Device.WaitCommandList();
 
-  //_pipeline.Clear(_device.context(), 0.5f, 0.5f, 1.0f, 1.0f);
-
-  //_quad->Draw(_device.context());
-  //_triangle->Draw(_d3d11Device.context());
-
-  _dxgiDevice->Present();
-
-  _fpsCounter.Inc();
-  if (_fpsCounter.Update()) {
-    std::wstringstream ss;
-    ss.setf(std::ios::fixed);
-    ss.setf(std::ios::showpoint);
-    ss.precision(2);
-    ss << "FPS: " << _fpsCounter.Fps();
-    SetTitle(ss.str().c_str());
-  }
+  // _fpsCounter.Inc();
+  // if (_fpsCounter.Update()) {
+  //   std::wstringstream ss;
+  //   ss.setf(std::ios::fixed);
+  //   ss.setf(std::ios::showpoint);
+  //   ss.precision(2);
+  //   ss << "FPS: " << _fpsCounter.Fps();
+  //   SetTitle(ss.str().c_str());
+  // }
 
 }
 

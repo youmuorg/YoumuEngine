@@ -26,7 +26,7 @@ protected:
 
 protected:
   std::unique_ptr<D3d11Device> _d3d11Device;
-  std::unique_ptr<DxgiDevice> _dxgiDevice;
+  std::unique_ptr<DxgiDeviceUtils> _dxgiDevice;
   std::unique_ptr<D3d11RenderTarget> _d3d11RenderTarget;
   std::unique_ptr<D3d11Quad> _quad;
   std::unique_ptr<D3d11Triangle> _triangle;

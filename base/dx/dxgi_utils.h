@@ -38,11 +38,11 @@ private:
   ComPtr<IDXGIFactory4> _factory4;
 };
 
-class DxgiDevice {
+class DxgiDeviceUtils {
 public:
   // 从窗口创建交换链
-  DxgiDevice(IUnknown* d3dDevice, HWND windowHandle);
-  DxgiDevice(IDXGIFactory2* factory2, IUnknown* d3dDevice, HWND windowHandle);
+  DxgiDeviceUtils(IUnknown* d3dDevice, HWND windowHandle);
+  DxgiDeviceUtils(IDXGIFactory2* factory2, IUnknown* d3dDevice, HWND windowHandle);
 
   void Resize(UINT width, UINT height);
   void Clear();

@@ -2,8 +2,6 @@
 
 // https://learn.microsoft.com/en-us/windows/win32/winprog/using-the-windows-headers
 
-#define _WIN32_WINNT _WIN32_WINNT_WIN10
-
 #ifndef UNICODE
 #define UNICODE
 #endif

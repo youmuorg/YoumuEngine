@@ -13,6 +13,7 @@ using Microsoft::WRL::ComPtr;
 using win::_ComThrowIfError;
 using win::_ApiThrowIfNot;
 using win::_ThrowIfNot;
+using win::_ThrowMessageIfNot;
 
 }
 }

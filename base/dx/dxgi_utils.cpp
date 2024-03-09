@@ -53,7 +53,7 @@ DxgiFactory4::DxgiFactory4() {
   _factory4.As(&_factory1);
 }
 
-DxgiDevice::DxgiDevice(IDXGIFactory2* factory2,
+DxgiDeviceUtils::DxgiDeviceUtils(IDXGIFactory2* factory2,
                        IUnknown* d3dDevice,
                        HWND windowHandle) {
   // RECT rect;
@@ -92,7 +92,7 @@ DxgiDevice::DxgiDevice(IDXGIFactory2* factory2,
   _ComThrowIfError(hr);
 }
 
-DxgiDevice::DxgiDevice(IUnknown* d3dDevice, HWND windowHandle) {
+DxgiDeviceUtils::DxgiDeviceUtils(IUnknown* d3dDevice, HWND windowHandle) {
   HRESULT hr = d3dDevice->QueryInterface(IID_PPV_ARGS(&_device));
   _ComThrowIfError(hr);
 
@@ -136,14 +136,14 @@ DxgiDevice::DxgiDevice(IUnknown* d3dDevice, HWND windowHandle) {
   _ComThrowIfError(hr);
 }
 
-void DxgiDevice::Resize(UINT width, UINT height) {
+void DxgiDeviceUtils::Resize(UINT width, UINT height) {
   HRESULT hr = _swapChain1->ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
   _ComThrowIfError(hr);
 }
 
-void DxgiDevice::Clear() {}
+void DxgiDeviceUtils::Clear() {}
 
-void DxgiDevice::Present() {
+void DxgiDeviceUtils::Present() {
   HRESULT hr = _swapChain1->Present(1, 0);
   _ComThrowIfError(hr);
 }

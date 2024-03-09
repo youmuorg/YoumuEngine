@@ -11,7 +11,7 @@ constexpr wchar_t _kBaseOverlappedWindowClassName[] =
 constexpr wchar_t _kBaseOverlappedWindowName[] = L"BaseOverlappedWindow";
 constexpr wchar_t _kWindowClassProp[] = L"WindowClass";
 
-LRESULT CALLBACK _WindowProc(HWND hwnd,
+static LRESULT CALLBACK _WindowProc(HWND hwnd,
                                          UINT msg,
                                          WPARAM wparam,
                                          LPARAM lparam) {

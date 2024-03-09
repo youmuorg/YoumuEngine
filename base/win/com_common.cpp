@@ -6,7 +6,7 @@ namespace win {
 
 void ComApartment::Initialize() {
   HRESULT hr = ::CoInitializeEx(nullptr, COINIT_MULTITHREADED);
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 }
 }  // namespace win
 }  // namespace base

@@ -9,15 +9,15 @@ D2d1DebugInfoLayer::D2d1DebugInfoLayer(ID2D1RenderTarget* rt, IDWriteFactory* dw
   HRESULT hr = rt->CreateSolidColorBrush(
       D2D1::ColorF(D2D1::ColorF::Red),
       &_brush);
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 
   hr = dwf->CreateTextFormat(L"微软雅黑", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, 24, L"", &_format);
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 
   hr = _format->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
   hr = _format->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 }
 
 void D2d1DebugInfoLayer::Draw(ID2D1RenderTarget* rt) {

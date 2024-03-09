@@ -15,7 +15,7 @@ DxgiFactory1::DxgiFactory1(const DxgiCreateParams& params) {
 
   std::call_once(loadFlag, []() -> void {
     HMODULE lib = ::LoadLibraryW(L"dxgi.dll");
-    _ApiThrowIfNot("LoadLibraryW", lib != NULL);
+    _ThrowIfError("LoadLibraryW", lib != NULL);
 
     createDxgiFactory1 = reinterpret_cast<CreateDxgiFactory1Proc*>(
         ::GetProcAddress(lib, "CreateDXGIFactory1"));
@@ -23,7 +23,7 @@ DxgiFactory1::DxgiFactory1(const DxgiCreateParams& params) {
   _ThrowIfNot(createDxgiFactory1 == nullptr);
 
   HRESULT hr = createDxgiFactory1(IID_PPV_ARGS(&_factory1));
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 }
 
 DxgiFactory4::DxgiFactory4() {
@@ -35,7 +35,7 @@ DxgiFactory4::DxgiFactory4() {
 
   std::call_once(loadFlag, []() -> void {
     HMODULE lib = ::LoadLibraryW(L"dxgi.dll");
-    _ApiThrowIfNot("LoadLibraryW", lib != NULL);
+    _ThrowIfError("LoadLibraryW", lib != NULL);
 
     createDxgiFactory2 = reinterpret_cast<CreateDxgiFactory2Proc*>(
         ::GetProcAddress(lib, "CreateDXGIFactory2"));
@@ -48,7 +48,7 @@ DxgiFactory4::DxgiFactory4() {
 #endif
 
   HRESULT hr = createDxgiFactory2(flags, IID_PPV_ARGS(&_factory4));
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 
   _factory4.As(&_factory1);
 }
@@ -82,26 +82,26 @@ DxgiDeviceUtils::DxgiDeviceUtils(IDXGIFactory2* factory2,
   HRESULT hr = factory2->CreateSwapChainForHwnd(
       d3dDevice, windowHandle, &swapchain_desc, nullptr, nullptr,
       _swapChain1.GetAddressOf());
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 
   // 禁用全屏快捷键
   hr = factory2->MakeWindowAssociation(windowHandle, DXGI_MWA_NO_ALT_ENTER);
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 
   hr = _swapChain1.As(&_swapChain3);
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 }
 
 DxgiDeviceUtils::DxgiDeviceUtils(IUnknown* d3dDevice, HWND windowHandle) {
   HRESULT hr = d3dDevice->QueryInterface(IID_PPV_ARGS(&_device));
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 
   hr = _device->GetAdapter(_adapter.GetAddressOf());
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 
   ComPtr<IDXGIFactory2> factory2;
   hr = _adapter->GetParent(IID_PPV_ARGS(&factory2));
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 
   // RECT rect;
   // memset(&rect, 0, sizeof(rect));
@@ -129,23 +129,23 @@ DxgiDeviceUtils::DxgiDeviceUtils(IUnknown* d3dDevice, HWND windowHandle) {
   hr = factory2->CreateSwapChainForHwnd(
       d3dDevice, windowHandle, &swapchain_desc, nullptr, nullptr,
       _swapChain1.GetAddressOf());
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 
   // 禁用全屏快捷键
   hr = factory2->MakeWindowAssociation(windowHandle, DXGI_MWA_NO_ALT_ENTER);
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 }
 
 void DxgiDeviceUtils::Resize(UINT width, UINT height) {
   HRESULT hr = _swapChain1->ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 }
 
 void DxgiDeviceUtils::Clear() {}
 
 void DxgiDeviceUtils::Present() {
   HRESULT hr = _swapChain1->Present(1, 0);
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 }
 
 DxgiDuplication::DxgiDuplication(IUnknown* d3dDevice, IDXGIAdapter* adapter) {
@@ -153,7 +153,7 @@ DxgiDuplication::DxgiDuplication(IUnknown* d3dDevice, IDXGIAdapter* adapter) {
   // dx::DxgiFactory dxgiFactory{};
   // dx::ComPtr<IDXGIAdapter1> dxgiAdapter;
   // hr = dxgiFactory.factory1()->EnumAdapters1(0, dxgiAdapter.GetAddressOf());
-  // dx::_ComThrowIfError(hr);
+  // dx::_ThrowIfFailed(hr);
 
   //{
   //  DXGI_ADAPTER_DESC desc{0};
@@ -164,11 +164,11 @@ DxgiDuplication::DxgiDuplication(IUnknown* d3dDevice, IDXGIAdapter* adapter) {
   dx::ComPtr<IDXGIOutput> dxgiOutput;
   hr = adapter->EnumOutputs(0, &dxgiOutput);
   // hr = dxgiAdapter->EnumOutputs(0, &dxgiOutput);
-  dx::_ComThrowIfError(hr);
+  dx::_ThrowIfFailed(hr);
 
   dx::ComPtr<IDXGIOutput1> dxgiOutput1;
   hr = dxgiOutput.As(&dxgiOutput1);
-  dx::_ComThrowIfError(hr);
+  dx::_ThrowIfFailed(hr);
 
   //{
   //  DXGI_OUTPUT_DESC desc{0};
@@ -177,7 +177,7 @@ DxgiDuplication::DxgiDuplication(IUnknown* d3dDevice, IDXGIAdapter* adapter) {
   //}
 
   hr = dxgiOutput1->DuplicateOutput(d3dDevice, _duplication.GetAddressOf());
-  dx::_ComThrowIfError(hr);
+  dx::_ThrowIfFailed(hr);
 
   //{
   //  D3D11_TEXTURE2D_DESC desc{0};
@@ -196,7 +196,7 @@ void DxgiDuplication::AcquireFrame() {
     // 忽略丢帧
     return;
   }
-  dx::_ComThrowIfError(hr);
+  dx::_ThrowIfFailed(hr);
 }
 
 void DxgiDuplication::ReleaseFrame() {

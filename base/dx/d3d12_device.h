@@ -5,12 +5,16 @@
 #include <base/win/synchronization.h>
 
 #include <directx/d3d12.h>
+#include <directx/d3dx12.h>
 #include <dxgi1_6.h>
 
 #include <vector>
 
 namespace base {
 namespace dx {
+
+HMODULE _GetD3d12Lib();
+PFN_D3D12_SERIALIZE_ROOT_SIGNATURE _GetD3d12SerializeRootSignatureFun();
 
 class D3d12Device {
 public:
@@ -22,9 +26,14 @@ public:
   void CreateDescriptorHeaps();
   // 创建渲染目标视图
   void CreateRtv();
+  // 创建深度、模板视图
   void CreateDsv();
+  // 创建管线相关资源
+  void CreatePipeline();
 
   // 记录命令列表
+  void BeginPopulateCommandList();
+  void EndPopulateCommandList();
   void PopulateCommandList();
   // 执行命令列表
   void ExecuteCommandList();
@@ -33,6 +42,8 @@ public:
   void WaitCommandList();
 
   ID3D12Device* device() { return _device.Get(); }
+  ID3D12CommandAllocator* commandAllocator() { return _commandAllocator.Get(); }
+  ID3D12GraphicsCommandList* commandList() { return _commandList.Get(); }
 
 public:
   static void EnableDebugLayer();
@@ -68,7 +79,11 @@ private:
 
   // descriptor
   std::vector<ComPtr<ID3D12Resource>> _rtvBuffers;
+
+  // pipeline
+  CD3DX12_VIEWPORT _viewport;
+  CD3DX12_RECT _scissorRect;
 };
 
-}
+}  // namespace dx
 }

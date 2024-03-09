@@ -48,12 +48,12 @@ D3d11Device::D3d11Device() {
   static std::once_flag loadFlag;
   std::call_once(loadFlag, []() -> void {
     HMODULE libD3d11 = ::LoadLibraryW(L"d3d11.dll");
-    _ApiThrowIfNot("LoadLibraryW", libD3d11 != NULL);
+    _ThrowIfError("LoadLibraryW", libD3d11 != NULL);
 
     createDevice = 
         reinterpret_cast<D3d11CreateDeviceProc*>(
             GetProcAddress(libD3d11, "D3D11CreateDevice"));
-    _ApiThrowIfNot("GetProcAddress", createDevice != nullptr);
+    _ThrowIfError("GetProcAddress", createDevice != nullptr);
   });
 
   HRESULT hr = createDevice(
@@ -67,7 +67,7 @@ D3d11Device::D3d11Device() {
       _device.GetAddressOf(), 
       &selectedLevel, 
       _context.GetAddressOf());
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
   _ThrowIfNot(selectedLevel >= D3D_FEATURE_LEVEL_11_0);
 }
 
@@ -90,11 +90,11 @@ D3d11RenderTarget::D3d11RenderTarget(ID3D11Device* dev, UINT width, UINT height)
   desc.Usage = D3D11_USAGE_DEFAULT;
 
   HRESULT hr = dev->CreateTexture2D(&desc, nullptr, &_buffer);
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 
   // 创建 RTV 资源。
   hr = dev->CreateRenderTargetView(_buffer.Get(), nullptr, _view.GetAddressOf());
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 
   InitResource(dev);
 }
@@ -107,7 +107,7 @@ D3d11RenderTarget::D3d11RenderTarget(ID3D11Device* dev, IDXGISwapChain1* swapCha
 void D3d11RenderTarget::CreateRtv(ID3D11Device* dev, IDXGISwapChain1* swapChain1) {
   // 取得交换链后台缓冲。
   HRESULT hr = swapChain1->GetBuffer(0, IID_PPV_ARGS(&_buffer));
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 
   D3D11_TEXTURE2D_DESC desc = {0};
   _buffer->GetDesc(&desc);
@@ -115,7 +115,7 @@ void D3d11RenderTarget::CreateRtv(ID3D11Device* dev, IDXGISwapChain1* swapChain1
 
   // 创建 RTV 资源。
   hr = dev->CreateRenderTargetView(_buffer.Get(), nullptr, _view.GetAddressOf());
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 
   // 设置视口
   _viewport.Width = static_cast<float>(desc.Width);
@@ -198,7 +198,7 @@ void D3dShaderCompiler::Init() {
   static std::once_flag loadFlag;
   std::call_once(loadFlag, [this](){
     HMODULE lib = ::LoadLibraryW(L"d3dcompiler_47.dll");
-    _ApiThrowIfNot("LoadLibraryW", lib != nullptr);
+    _ThrowIfError("LoadLibraryW", lib != nullptr);
 
     _d3dCompile = reinterpret_cast<D3dCompileProc*>(
         ::GetProcAddress(lib, "D3DCompile"));
@@ -239,7 +239,7 @@ void D3dShaderCompiler::Compile(
     std::string errorMsg(reinterpret_cast<char*>(blobError->GetBufferPointer()), blobError->GetBufferSize());
     _ComThrow(errorMsg);
   }
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 }
 
 struct TriangleVertex {
@@ -348,7 +348,7 @@ D3d11Triangle::D3d11Triangle(ID3D11Device* dev) {
   srd.pSysMem = vertices;
 
   hr = dev->CreateBuffer(&bufferDesc, &srd, &_buffer);
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
   _stride = sizeof(vertices[0]);
   _vertices = sizeof(vertices) / sizeof(vertices[0]);
 
@@ -417,7 +417,7 @@ void D3d11Quad::CreatePixelShaderResource(ID3D11Device* dev, UINT width, UINT he
   //srd.SysMemSlicePitch = 0;
 
   HRESULT hr = dev->CreateTexture2D(&desc, nullptr, _pixelShaderResource.ReleaseAndGetAddressOf());
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 }
 
 void D3d11Quad::InitResource(ID3D11Device* dev, UINT x, UINT y, UINT width, UINT height) {
@@ -434,7 +434,7 @@ void D3d11Quad::InitResource(ID3D11Device* dev, UINT x, UINT y, UINT width, UINT
   srvDesc.Texture2D.MipLevels = 1;
 
   hr = dev->CreateShaderResourceView(_pixelShaderResource.Get(), &srvDesc, _pixelShaderResourceView.GetAddressOf());
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 
   //_x = (x * 2.0f) - 1.0f;
   //_y = 1.0f - (y * 2.0f);
@@ -472,7 +472,7 @@ void D3d11Quad::InitResource(ID3D11Device* dev, UINT x, UINT y, UINT width, UINT
   srd.pSysMem = vertices;
 
   hr = dev->CreateBuffer(&desc, &srd, &_buffer);
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 
   _primitive = D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
   _vertices = 4;

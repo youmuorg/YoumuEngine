@@ -11,7 +11,7 @@ public:
   void Create() {
     Close();
     _handle = ::CreateEventW(nullptr, FALSE, FALSE, nullptr);
-    _ApiThrowIfNot("CreateEventW", IsValid());
+    _ThrowIfError("CreateEventW", IsValid());
   }
 };
 

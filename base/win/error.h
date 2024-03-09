@@ -32,7 +32,7 @@ class ApiError {
 
 };
 
-inline void _ApiThrowIfNot(
+inline void _ThrowIfError(
     const char* apiName, 
     bool expr, 
     const std::source_location location = 

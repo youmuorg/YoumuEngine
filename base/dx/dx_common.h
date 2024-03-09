@@ -10,8 +10,8 @@ namespace base {
 namespace dx {
 
 using Microsoft::WRL::ComPtr;
-using win::_ComThrowIfError;
-using win::_ApiThrowIfNot;
+using win::_ThrowIfFailed;
+using win::_ThrowIfError;
 using win::_ThrowIfNot;
 using win::_ThrowMessageIfNot;
 

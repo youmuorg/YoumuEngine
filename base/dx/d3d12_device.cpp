@@ -1,30 +1,36 @@
 #include "d3d12_device.h"
 
-#include <directx/d3dx12.h>
-
 #include <mutex>
 
 namespace base {
 namespace dx {
 
-static HMODULE _GetD3d12Lib() {
+HMODULE _GetD3d12Lib() {
   static std::once_flag loadFlag;
   static HMODULE lib = nullptr;
 
   std::call_once(loadFlag, []() { lib = ::LoadLibraryW(L"d3d12.dll"); });
-  _ApiThrowIfNot("LoadLibraryW", lib != nullptr);
+  _ThrowIfError("LoadLibraryW", lib != nullptr);
   return lib;
+}
+
+PFN_D3D12_SERIALIZE_ROOT_SIGNATURE _GetD3d12SerializeRootSignatureFun() {
+  PFN_D3D12_SERIALIZE_ROOT_SIGNATURE d3d12SerializeRootSignature =
+      reinterpret_cast<PFN_D3D12_SERIALIZE_ROOT_SIGNATURE>(
+          ::GetProcAddress(_GetD3d12Lib(), "D3D12SerializeRootSignature"));
+  _ThrowIfError("GetProcAddress", d3d12SerializeRootSignature != nullptr);
+  return d3d12SerializeRootSignature;
 }
 
 void D3d12Device::EnableDebugLayer() {
   PFN_D3D12_GET_DEBUG_INTERFACE d3d12GetDebugInterface =
       reinterpret_cast<PFN_D3D12_GET_DEBUG_INTERFACE>(
           ::GetProcAddress(_GetD3d12Lib(), "D3D12GetDebugInterface"));
-  _ThrowIfNot(d3d12GetDebugInterface != nullptr);
+  _ThrowIfError("GetProcAddress", d3d12GetDebugInterface != nullptr);
 
   ComPtr<ID3D12Debug> debugController;
   HRESULT hr = d3d12GetDebugInterface(IID_PPV_ARGS(&debugController));
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 
   debugController->EnableDebugLayer();
 }
@@ -37,7 +43,7 @@ void D3d12Device::CreateDevice(IDXGIFactory1* dxgiFactory) {
   PFN_D3D12_CREATE_DEVICE d3d12CreateDevice =
       reinterpret_cast<PFN_D3D12_CREATE_DEVICE>(
           ::GetProcAddress(_GetD3d12Lib(), "D3D12CreateDevice"));
-  _ThrowIfNot(d3d12CreateDevice != nullptr);
+  _ThrowIfError("GetProcAddress", d3d12CreateDevice != nullptr);
 
   ComPtr<IDXGIAdapter1> adapter;
   ComPtr<IDXGIFactory6> dxgiFactory6;
@@ -92,7 +98,7 @@ void D3d12Device::CreateDevice(IDXGIFactory1* dxgiFactory) {
   // 创建 D3D12 设备
   HRESULT hr = d3d12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_11_0,
                                  IID_PPV_ARGS(&_device));
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 
   // 检查 4X MSAA 抗锯齿支持
   D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS msql;
@@ -102,7 +108,7 @@ void D3d12Device::CreateDevice(IDXGIFactory1* dxgiFactory) {
   msql.NumQualityLevels = 0;
   hr = _device->CheckFeatureSupport(D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS,
                                     &msql, sizeof(msql));
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 
   _ThrowMessageIfNot(msql.NumQualityLevels > 0,
                      "Unexpected MSAA quality level.");
@@ -119,7 +125,7 @@ void D3d12Device::CreateSwapchainForHwnd(IDXGIFactory2* dxgiFactory,
   // 自适应窗口大小
   desc.Width = 0;
   desc.Height = 0;
-  desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+  desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
   desc.Stereo = FALSE;
   desc.SampleDesc.Count = 1;
   desc.SampleDesc.Quality = 0;
@@ -136,23 +142,31 @@ void D3d12Device::CreateSwapchainForHwnd(IDXGIFactory2* dxgiFactory,
   HRESULT hr = dxgiFactory->CreateSwapChainForHwnd(
       _commandQueue.Get(), hwnd, &desc, nullptr, nullptr,
       swapchain1.ReleaseAndGetAddressOf());
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 
   // 禁用全屏快捷键
   hr = dxgiFactory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER);
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 
   hr = swapchain1.As(&_swapchain);
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 
   _frameIndex = _swapchain->GetCurrentBackBufferIndex();
+
+  // 获取缓冲区 size
+  ComPtr<ID3D12Resource> buffer;
+  hr = _swapchain->GetBuffer(_frameIndex, IID_PPV_ARGS(&buffer));
+  _ThrowIfFailed(hr);
+  D3D12_RESOURCE_DESC bufferDesc = buffer->GetDesc();
+  _viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(bufferDesc.Width), static_cast<float>(bufferDesc.Height));
+  _scissorRect = CD3DX12_RECT(0, 0, static_cast<LONG>(bufferDesc.Width), static_cast<LONG>(bufferDesc.Height));
 }
 
 void D3d12Device::CreateFence() {
   // 创建同步围栏
   HRESULT hr =
       _device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&_fence));
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 
   _fenceValue = 1;
   _fenceEvent.Create();
@@ -166,20 +180,21 @@ void D3d12Device::CreateCommandQueue() {
 
   HRESULT hr =
       _device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&_commandQueue));
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 
   hr = _device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT,
                                        IID_PPV_ARGS(&_commandAllocator));
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 
+  // 创建命令列表
   hr = _device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT,
                                   _commandAllocator.Get(), nullptr,
                                   IID_PPV_ARGS(&_commandList));
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 
   // 命令列表创建时默认处于记录状态，先关闭。
   hr = _commandList->Close();
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 }
 
 // 创建视图描述符堆
@@ -191,7 +206,7 @@ void D3d12Device::CreateDescriptorHeaps() {
   rtvHeapDesc.NodeMask = 0;
   HRESULT hr = _device->CreateDescriptorHeap(
       &rtvHeapDesc, IID_PPV_ARGS(&_rtvHeap));
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 
   D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
   dsvHeapDesc.NumDescriptors = _frameCount;
@@ -200,7 +215,7 @@ void D3d12Device::CreateDescriptorHeaps() {
   dsvHeapDesc.NodeMask = 0;
   hr = _device->CreateDescriptorHeap(
       &dsvHeapDesc, IID_PPV_ARGS(&_dsvHeap));
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 
   // 获取描述符大小
   _rtvDescriptorSize = _device->GetDescriptorHandleIncrementSize(
@@ -218,7 +233,7 @@ void D3d12Device::CreateRtv() {
   _rtvBuffers.resize(_frameCount);
   for (UINT n = 0; n < _frameCount; n++) {
     HRESULT hr = _swapchain->GetBuffer(n, IID_PPV_ARGS(&_rtvBuffers[n]));
-    _ComThrowIfError(hr);
+    _ThrowIfFailed(hr);
     _device->CreateRenderTargetView(_rtvBuffers[n].Get(), nullptr, rtvHandle);
     rtvHandle.Offset(1, _rtvDescriptorSize);
   }
@@ -234,21 +249,25 @@ void D3d12Device::CreateDsv() {
   _rtvBuffers.resize(_frameCount);
   for (UINT n = 0; n < _frameCount; n++) {
     HRESULT hr = _swapchain->GetBuffer(n, IID_PPV_ARGS(&_rtvBuffers[n]));
-    _ComThrowIfError(hr);
+    _ThrowIfFailed(hr);
     _device->CreateRenderTargetView(_rtvBuffers[n].Get(), nullptr, rtvHandle);
     rtvHandle.Offset(1, _rtvDescriptorSize);
   }
 }
 
-// 记录命令
-void D3d12Device::PopulateCommandList() {
+void D3d12Device::CreatePipeline() {}
+
+void D3d12Device::BeginPopulateCommandList() {
   // 必须在 GPU 执行完成关联的命令列表，才能重置此分配器。
   HRESULT hr = _commandAllocator->Reset();
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 
   // 重置命令列表
   hr = _commandList->Reset(_commandAllocator.Get(), nullptr);
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
+
+  _commandList->RSSetViewports(1, &_viewport);
+  _commandList->RSSetScissorRects(1, &_scissorRect);
 
   // 将资源从呈现状态转换为渲染目标状态
   CD3DX12_RESOURCE_BARRIER resourceBarrierRenderTarget =
@@ -260,11 +279,13 @@ void D3d12Device::PopulateCommandList() {
   CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(
       _rtvHeap->GetCPUDescriptorHandleForHeapStart(), _frameIndex,
       _rtvDescriptorSize);
-
+  _commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
   // 清屏
-  const float clearColor[] = {0.0f, 0.2f, 0.4f, 1.0f};
+  const float clearColor[] = {0.0f, 0.4f, 0.5f, 1.0f};
   _commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+}
 
+void D3d12Device::EndPopulateCommandList() {
   // 再次转换资源
   CD3DX12_RESOURCE_BARRIER resourceBarrierPresent =
       CD3DX12_RESOURCE_BARRIER::Transition(_rtvBuffers[_frameIndex].Get(),
@@ -273,8 +294,12 @@ void D3d12Device::PopulateCommandList() {
   _commandList->ResourceBarrier(1, &resourceBarrierPresent);
 
   // 命令记录完成
-  hr = _commandList->Close();
-  _ComThrowIfError(hr);
+  HRESULT hr = _commandList->Close();
+  _ThrowIfFailed(hr);
+}
+
+// 记录命令
+void D3d12Device::PopulateCommandList() {
 }
 
 void D3d12Device::ExecuteCommandList() {
@@ -284,13 +309,13 @@ void D3d12Device::ExecuteCommandList() {
 
 void D3d12Device::Present() {
   HRESULT hr = _swapchain->Present(1, 0);
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 }
 
 void D3d12Device::WaitCommandList() {
   const uint64_t fence = _fenceValue;
   HRESULT hr = _commandQueue->Signal(_fence.Get(), fence);
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 
   _fenceValue++;
 

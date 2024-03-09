@@ -65,7 +65,7 @@ void D3d11Window::Paint() {
 
   //DirectX::ScratchImage image;
   //hr = DirectX::CaptureTexture(_d3d11Device->device(), _d3d11Device->context(), _quad->texture(), image);
-  //dx::_ComThrowIfError(hr);
+  //dx::_ThrowIfFailed(hr);
 
   //hr = DirectX::SaveToWICFile(
   //    image.GetImages(),
@@ -74,7 +74,7 @@ void D3d11Window::Paint() {
   //    GUID_ContainerFormatPng, 
   //    L"D:\\Temp\\t.png",
   //    &GUID_WICPixelFormat32bppBGRA);
-  //dx::_ComThrowIfError(hr);
+  //dx::_ThrowIfFailed(hr);
 }
 
 void D3d11Window::Capture() {
@@ -98,11 +98,11 @@ void D3d11Window::Capture() {
   if (_duplication->frame()) {
     dx::ComPtr<ID3D11Texture2D> acquireFrame;
     hr = _duplication->frame()->QueryInterface(__uuidof(ID3D11Texture2D), &acquireFrame);
-    dx::_ComThrowIfError(hr);
+    dx::_ThrowIfFailed(hr);
 
     //DirectX::ScratchImage image;
     //hr = DirectX::CaptureTexture(_d3d11Device->device(), _d3d11Device->context(), frameData.Frame, image);
-    //dx::_ComThrowIfError(hr);
+    //dx::_ThrowIfFailed(hr);
 
     //hr = DirectX::SaveToWICFile(
     //    image.GetImages(),
@@ -111,7 +111,7 @@ void D3d11Window::Capture() {
     //    GUID_ContainerFormatPng, 
     //    L"D:\\Temp\\t.png",
     //    &GUID_WICPixelFormat32bppBGRA);
-    //dx::_ComThrowIfError(hr);
+    //dx::_ThrowIfFailed(hr);
 
     D3D11_BOX srcRegion{0};
     srcRegion.left = 0;

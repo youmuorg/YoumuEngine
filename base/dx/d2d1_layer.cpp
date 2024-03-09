@@ -5,14 +5,14 @@ namespace dx {
 
 D2d1Layer::D2d1Layer(ID2D1RenderTarget* rt) {
   HRESULT hr = rt->CreateLayer(NULL, &_layer);
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 }
 
 D2d1QuadLayer::D2d1QuadLayer(ID2D1RenderTarget* rt) : D2d1Layer(rt) {
   HRESULT hr = rt->CreateSolidColorBrush(
       D2D1::ColorF(D2D1::ColorF::Blue),
       &_brush);
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 }
 
 void D2d1QuadLayer::Draw(ID2D1RenderTarget* rt) {

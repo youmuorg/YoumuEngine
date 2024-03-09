@@ -17,7 +17,7 @@ D2d1Window::D2d1Window() {
 void D2d1Window::BindResources() {
   ComPtr<IDXGISurface> dxgiSurface;
   HRESULT hr = _dxgiDevice->swapChain1()->GetBuffer(0, IID_PPV_ARGS(&dxgiSurface));
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 
   D2D1_BITMAP_PROPERTIES1 bitmapProps = D2D1::BitmapProperties1(
       D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
@@ -26,7 +26,7 @@ void D2d1Window::BindResources() {
 
   ComPtr<ID2D1Bitmap1> bitmap;
   hr = _d2d1Device->context()->CreateBitmapFromDxgiSurface(dxgiSurface.Get(), bitmapProps, &bitmap);
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 
   _d2d1Device->context()->SetTarget(bitmap.Get());
   _d2d1RenderTarget = std::make_unique<D2d1RenderTarget>(_d2d1Device->context());
@@ -44,7 +44,7 @@ void D2d1Window::OnResize(UINT width, UINT height) {
 
   ComPtr<IDXGISurface> buffer;
   HRESULT hr = _dxgiDevice->swapChain1()->GetBuffer(0, IID_PPV_ARGS(&buffer));
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 
   BindResources();
 }

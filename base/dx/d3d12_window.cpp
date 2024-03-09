@@ -21,6 +21,11 @@ void D3d12Window::Initialize() {
     _d3d12Device.CreateFence();
     _d3d12Device.CreateRtv();
 
+    OnLoadAssets(_d3d12Device.device());
+
+    // 渲染前确保资源上传 GPU 完成
+    _d3d12Device.WaitCommandList();
+
     Render();
     Show();
 }
@@ -37,8 +42,8 @@ void D3d12Window::OnMove(INT x, INT y) {
   Render();
 }
 
-void D3d12Window::Paint() {
-  HRESULT hr = S_OK;
+// void D3d12Window::Paint() {
+//   HRESULT hr = S_OK;
 
   //dx::D3d11RenderTarget target(_d3d11Device.device(), clientWidth(), clientHeight());
   //dx::ComPtr<IDXGISurface> surface;
@@ -58,7 +63,7 @@ void D3d12Window::Paint() {
 
   //DirectX::ScratchImage image;
   //hr = DirectX::CaptureTexture(_d3d11Device.device(), _d3d11Device.context(), _quad->texture(), image);
-  //dx::_ComThrowIfError(hr);
+  //dx::_ThrowIfFailed(hr);
 
   //hr = DirectX::SaveToWICFile(
   //    image.GetImages(),
@@ -67,11 +72,13 @@ void D3d12Window::Paint() {
   //    GUID_ContainerFormatPng, 
   //    L"D:\\Temp\\t.png",
   //    &GUID_WICPixelFormat32bppBGRA);
-  //dx::_ComThrowIfError(hr);
-}
+  //dx::_ThrowIfFailed(hr);
+// }
 
 void D3d12Window::Render() {
-  _d3d12Device.PopulateCommandList();
+  _d3d12Device.BeginPopulateCommandList();
+  OnPopulateCommandList(_d3d12Device.commandList());
+  _d3d12Device.EndPopulateCommandList();
   _d3d12Device.ExecuteCommandList();
   _d3d12Device.Present();
   _d3d12Device.WaitCommandList();
@@ -85,7 +92,6 @@ void D3d12Window::Render() {
   //   ss << "FPS: " << _fpsCounter.Fps();
   //   SetTitle(ss.str().c_str());
   // }
-
 }
 
 } // namespace dx

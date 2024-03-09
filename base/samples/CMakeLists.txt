@@ -11,6 +11,12 @@ add_executable(
 )
 target_include_directories(d3d12_sample PRIVATE "${CMAKE_CURRENT_LIST_DIR}")
 target_link_libraries(d3d12_sample PRIVATE base_win base_dx)
+message("================== ${CMAKE_CURRENT_BINARY_DIR}")
+add_custom_command(TARGET d3d12_sample
+  POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different 
+    "${CMAKE_CURRENT_SOURCE_DIR}/../dx/shader" 
+    "${CMAKE_CURRENT_BINARY_DIR}/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>")
 
 add_executable(
   d2d1_sample WIN32

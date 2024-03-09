@@ -10,7 +10,7 @@ HMODULE _GetDxgiLib() {
   static HMODULE lib = nullptr;
 
   std::call_once(loadFlag, []() { lib = ::LoadLibraryW(L"dxgi.dll"); });
-  _ApiThrowIfNot("LoadLibraryW", lib != nullptr);
+  _ThrowIfError("LoadLibraryW", lib != nullptr);
   return lib;
 }
 
@@ -29,12 +29,12 @@ void DxgiDevice::CreateFactory6() {
 #endif
 
   HRESULT hr = createDxgiFactory2(flags, IID_PPV_ARGS(&_factory6));
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 
   hr = _factory6.As(&_factory2);
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
   hr = _factory6.As(&_factory1);
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 }
 
 void DxgiDevice::CreateFactory1() {
@@ -46,7 +46,7 @@ void DxgiDevice::CreateFactory1() {
   _ThrowIfNot(createDxgiFactory1 != nullptr);
 
   HRESULT hr = createDxgiFactory1(IID_PPV_ARGS(&_factory1));
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 }
 
 }  // namespace dx

@@ -17,12 +17,12 @@ D2d1Factory::D2d1Factory() {
   static std::once_flag loadFlag;
   std::call_once(loadFlag, []() -> void {
     HMODULE libD2d1 = ::LoadLibraryW(L"d2d1.dll");
-    _ApiThrowIfNot("LoadLibraryW", libD2d1 != NULL);
+    _ThrowIfError("LoadLibraryW", libD2d1 != NULL);
 
     createFactory = 
         reinterpret_cast<D2d1CreateFactoryProc*>(
             GetProcAddress(libD2d1, "D2D1CreateFactory"));
-    _ApiThrowIfNot("GetProcAddress", createFactory != nullptr);
+    _ThrowIfError("GetProcAddress", createFactory != nullptr);
   });
 
   HRESULT hr = S_OK;
@@ -31,14 +31,14 @@ D2d1Factory::D2d1Factory() {
       __uuidof(ID2D1Factory),
       nullptr,
       &_factory);
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 }
 
 D2d1Device::D2d1Device(ID2D1Factory1* factory, IDXGIDevice* dxgiDevice) {
   HRESULT hr = factory->CreateDevice(dxgiDevice, &_device);
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
   hr = _device->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE, &_context);
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 }
 
 void D2d1Device::Clear() {
@@ -63,7 +63,7 @@ D2d1RenderTarget::D2d1RenderTarget(
       dxgiSurface,
       &props,
       &_renderTarget);
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 }
 
 void D2d1RenderTarget::Begin() {
@@ -73,7 +73,7 @@ void D2d1RenderTarget::Begin() {
 
 void D2d1RenderTarget::End() {
   HRESULT hr = _renderTarget->EndDraw();
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 }
 
 void D2d1RenderTarget::Clear() {
@@ -84,7 +84,7 @@ D2d1Quad::D2d1Quad(ID2D1RenderTarget* rt) {
   HRESULT hr = rt->CreateSolidColorBrush(
       D2D1::ColorF(D2D1::ColorF::Blue),
       &_brush);
-  _ComThrowIfError(hr);
+  _ThrowIfFailed(hr);
 }
 
 void D2d1Quad::Draw(ID2D1RenderTarget* rt) {

@@ -37,7 +37,7 @@ inline void _ComCheckIfError(
 
 }
 
-inline void _ComThrowIfError(
+inline void _ThrowIfFailed(
     HRESULT hr, 
     const std::source_location location = 
         std::source_location::current()) {

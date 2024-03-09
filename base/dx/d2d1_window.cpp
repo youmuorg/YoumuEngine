@@ -1,7 +1,6 @@
 #include "d2d1_window.h"
 
 namespace base {
-namespace win {
 namespace dx {
 
 D2d1Window::D2d1Window() {
@@ -70,5 +69,4 @@ void D2d1Window::Render() {
 }
 
 } // namespace dx
-} // namespace win
 } // namespace base

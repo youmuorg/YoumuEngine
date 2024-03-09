@@ -1,13 +1,12 @@
 #pragma once
 
-#include "../com_error.h"
+#include "dx_common.h"
 
 #include <d3d12.h>
 #include <dxgi1_6.h>
 #include <wrl.h>
 
 namespace base {
-namespace win {
 namespace dx {
 
 using Microsoft::WRL::ComPtr;
@@ -49,6 +48,5 @@ private:
   UINT _cbvDescriptorSize = 0;
 };
 
-}
 }
 }

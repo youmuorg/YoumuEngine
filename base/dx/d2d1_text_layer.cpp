@@ -3,7 +3,6 @@
 #include <string>
 
 namespace base {
-namespace win {
 namespace dx {
 
 D2d1DebugInfoLayer::D2d1DebugInfoLayer(ID2D1RenderTarget* rt, IDWriteFactory* dwf) : D2d1Layer(rt) {
@@ -36,6 +35,5 @@ void D2d1DebugInfoLayer::Draw(ID2D1RenderTarget* rt) {
   rt->PopLayer();
 }
 
-}
 }
 }

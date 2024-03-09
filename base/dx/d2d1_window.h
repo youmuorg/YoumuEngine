@@ -8,7 +8,6 @@
 #include <memory>
 
 namespace base {
-namespace win {
 namespace dx {
 
 class D2d1Window : public D3d11Window {
@@ -40,5 +39,4 @@ private:
 };
 
 } // namespace dx
-} // namespace win
 } // namespace base

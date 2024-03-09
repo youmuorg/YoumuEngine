@@ -1,5 +1,5 @@
 #include "d3d11_utils.h"
-#include "../com_error.h"
+#include <base/win/com_error.h>
 
 #include <directxmath.h>
 #include <d3dcompiler.h>
@@ -9,7 +9,6 @@
 using namespace base::win;
 
 namespace base {
-namespace win {
 namespace dx {
 
 D3d11Device::D3d11Device() {
@@ -593,5 +592,4 @@ void D3d11RenderPipeline::Draw(ID3D11DeviceContext* ctx) {
 }
 
 } // namespace dx
-} // namespace win
 } // namespace base

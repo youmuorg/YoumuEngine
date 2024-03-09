@@ -1,6 +1,6 @@
 #pragma once
 
-#include "win32_base.h"
+#include "win32_common.h"
 
 #include <atomic>
 

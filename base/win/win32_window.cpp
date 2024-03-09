@@ -6,11 +6,15 @@
 namespace base {
 namespace win {
 
-constexpr wchar_t _kBaseOverlappedWindowClassName[] = L"BaseOverlappedWindowClass";
+constexpr wchar_t _kBaseOverlappedWindowClassName[] =
+    L"BaseOverlappedWindowClass";
 constexpr wchar_t _kBaseOverlappedWindowName[] = L"BaseOverlappedWindow";
 constexpr wchar_t _kWindowClassProp[] = L"WindowClass";
 
-LRESULT CALLBACK _WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
+LRESULT CALLBACK _WindowProc(HWND hwnd,
+                                         UINT msg,
+                                         WPARAM wparam,
+                                         LPARAM lparam) {
   Win32Window* wnd = nullptr;
   if (msg == WM_NCCREATE) {
     // 非客户区创建时，把窗口关联到一个窗口实例。
@@ -18,7 +22,8 @@ LRESULT CALLBACK _WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) 
     if (cs != nullptr) {
       wnd = reinterpret_cast<Win32Window*>(cs->lpCreateParams);
       if (wnd != nullptr) {
-        BOOL bret = ::SetPropW(hwnd, _kWindowClassProp, reinterpret_cast<HANDLE>(wnd));
+        BOOL bret =
+            ::SetPropW(hwnd, _kWindowClassProp, reinterpret_cast<HANDLE>(wnd));
         _ApiCheckIfNot("SetPropW", bret != FALSE);
       }
     }
@@ -34,7 +39,8 @@ LRESULT CALLBACK _WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) 
 
   if (wnd != nullptr) {
     LRESULT lresult = 0;
-    bool isHandle = wnd->ProcessWindowMessage(hwnd, msg, wparam, lparam, lresult);
+    bool isHandle =
+        wnd->ProcessWindowMessage(hwnd, msg, wparam, lparam, lresult);
     if (isHandle) {
       return lresult;
     }
@@ -42,7 +48,11 @@ LRESULT CALLBACK _WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) 
   return ::DefWindowProcW(hwnd, msg, wparam, lparam);
 }
 
-ATOM _RegisterOverlappedWindowClass(HINSTANCE hinst) {
+Win32Window::Win32Window() {}
+
+ATOM Win32Window::RegisterWindowClass() {
+  HINSTANCE hinst = ::GetModuleHandleW(nullptr);
+
   WNDCLASSEXW wcex{0};
   wcex.cbSize = sizeof(wcex);
 
@@ -58,40 +68,21 @@ ATOM _RegisterOverlappedWindowClass(HINSTANCE hinst) {
   wcex.lpszMenuName = nullptr;
   wcex.lpszClassName = _kBaseOverlappedWindowClassName;
   wcex.hIconSm = nullptr;
-  
+
   ATOM atom = ::RegisterClassExW(&wcex);
   _ApiCheckIfNot("RegisterClassExW", atom != 0);
   return atom;
 }
 
-Win32Window::Win32Window(const WindowProperties& props) {
-  HINSTANCE hinst = props.hinst;
-  if (hinst == NULL) {
-    hinst = ::GetModuleHandleW(nullptr);
-  }
+HWND Win32Window::CreateOverlappedWindow(int x, int y, int width, int height) {
+  HINSTANCE hinst = ::GetModuleHandleW(nullptr);
 
-  static std::once_flag registerFlag;
-  std::call_once(registerFlag, _RegisterOverlappedWindowClass, hinst);
-
-  ::CreateWindowExW(
-      props.exStyle,
-      _kBaseOverlappedWindowClassName,
-      _kBaseOverlappedWindowName,
-      props.style,
-      props.x,
-      props.y,
-      props.width,
-      props.height,
-      HWND_DESKTOP,
-      props.hmenu,
-      hinst,
-      reinterpret_cast<void*>(this));
+  ::CreateWindowExW(0, _kBaseOverlappedWindowClassName,
+                    _kBaseOverlappedWindowName, WS_OVERLAPPEDWINDOW, x, y,
+                    width, height, HWND_DESKTOP, NULL, hinst,
+                    reinterpret_cast<void*>(this));
   _ApiCheckIfNot("CreateWindowExW", _hwnd != NULL);
-
-  RECT rc{0};
-  ::GetClientRect(_hwnd, &rc);
-  _clientWidth = rc.right - rc.left;
-  _clientHeight = rc.bottom - rc.top;
+  return _hwnd;
 }
 
 void Win32Window::Close() {
@@ -112,57 +103,59 @@ void Win32Window::SetTitle(const wchar_t* title) {
   ::SetWindowTextW(_hwnd, title);
 }
 
-bool Win32Window::ProcessWindowMessage(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT& lresult) {
+bool Win32Window::ProcessWindowMessage(HWND hwnd,
+                                       UINT msg,
+                                       WPARAM wparam,
+                                       LPARAM lparam,
+                                       LRESULT& lresult) {
   bool bhandle = false;
 
   switch (msg) {
-  case WM_NCCREATE:
-    // 非客户区创建
-    _hwnd = hwnd;
-    break;
-  case WM_CREATE:
-    // 客户区创建
-    bhandle = this->OnCreate(wparam, lparam, lresult);
-    break;
-  case WM_SIZING:
-    break;
-  case WM_SIZE:
-    {
+    case WM_NCCREATE:
+      // 非客户区创建
+      _hwnd = hwnd;
+      break;
+    case WM_CREATE:
+      // 客户区创建
+      bhandle = this->OnCreate(wparam, lparam, lresult);
+      break;
+    case WM_SIZING:
+      break;
+    case WM_SIZE: {
       _clientWidth = LOWORD(lparam);
       _clientHeight = HIWORD(lparam);
       this->OnResize(_clientWidth, _clientHeight);
     }
-    return 0;
-  case WM_MOVING:
-    break;
-  case WM_MOVE:
-    {
-      INT nonClientX = LOWORD(lparam);
-      INT nonClientY = HIWORD(lparam);
-      this->OnMove(nonClientX, nonClientY);
+      return 0;
+    case WM_MOVING:
+      break;
+    case WM_MOVE: {
+      _screenX = LOWORD(lparam);
+      _screenY = HIWORD(lparam);
+      this->OnMove(_screenX, _screenY);
     }
-    return 0;
-  case WM_PAINT: 
-    // 客户区更新请求
-    bhandle = this->OnPaint(wparam, lparam, lresult);
-    break;
-  case WM_DESTROY:
-    // 客户区销毁
-    bhandle = this->OnDestroy(wparam, lparam, lresult);
-    if (_quitAfterClosed) {
-      ::PostQuitMessage(0);
-    }
-    break;
-  case WM_NCDESTROY:
-    // 非客户区销毁
-    _hwnd = nullptr;
-    break;
-  default:
-    break;
+      return 0;
+    case WM_PAINT:
+      // 客户区更新请求
+      bhandle = this->OnPaint(wparam, lparam, lresult);
+      break;
+    case WM_DESTROY:
+      // 客户区销毁
+      bhandle = this->OnDestroy(wparam, lparam, lresult);
+      if (_quitAfterClosed) {
+        ::PostQuitMessage(0);
+      }
+      break;
+    case WM_NCDESTROY:
+      // 非客户区销毁
+      _hwnd = nullptr;
+      break;
+    default:
+      break;
   }
 
   return bhandle;
 }
 
-} // namespace win
-} // namespace base
+}  // namespace win
+}  // namespace base

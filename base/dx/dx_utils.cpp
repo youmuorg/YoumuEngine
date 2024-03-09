@@ -3,7 +3,6 @@
 using namespace std::chrono_literals;
 
 namespace base {
-namespace win {
 namespace dx {
 
 bool FpsCounter::Update() {
@@ -18,6 +17,5 @@ bool FpsCounter::Update() {
   return needUpdate;
 }
 
-}
 }
 }

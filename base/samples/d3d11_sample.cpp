@@ -1,9 +1,8 @@
 #include <base/win/message_loop.h>
-#include <base/win/dx/d3d11_utils.h>
-#include <base/win/dx/dxgi_utils.h>
-#include <base/win/dx/d3d11_window.h>
-
-#include <windows.h>
+#include <base/dx/d3d11_utils.h>
+#include <base/dx/dxgi_utils.h>
+#include <base/dx/d3d11_window.h>
+#include <base/win/com_common.h>
 
 #include <iostream>
 #include <chrono>
@@ -11,10 +10,10 @@
 
 using namespace std::literals::chrono_literals;
 using namespace base;
-namespace dx = base::win::dx;
 
 int WINAPI wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int) {
-  ::CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+  win::ComApartment::Initialize();
+  win::Win32Window::RegisterWindowClass();
 
   try {
     dx::D3d11Window wnd;

@@ -1,7 +1,6 @@
 #include "d2d1_compositor.h"
 
 namespace base {
-namespace win {
 namespace dx {
 
 void D2d1LayerNode::Draw(ID2D1RenderTarget* rt) {
@@ -26,6 +25,5 @@ void D2d1Compositor::AddLayer(std::unique_ptr<D2d1LayerNode> node) const {
   _root->children().emplace_back(std::move(node));
 }
 
-}
 }
 }

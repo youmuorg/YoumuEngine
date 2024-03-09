@@ -3,7 +3,6 @@
 #include <mutex>
 
 namespace base {
-namespace win {
 namespace dx {
 
 void D3d12EnableDebugLayer() {
@@ -134,6 +133,5 @@ D3d12Pipeline::D3d12Pipeline(
   _ComThrowIfError(hr);
 }
 
-}
 }
 }

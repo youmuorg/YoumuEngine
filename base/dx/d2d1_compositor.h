@@ -1,12 +1,11 @@
 #pragma once
 
-#include "d2d1_base.h"
+#include "d2d1_common.h"
 
 #include <memory>
 #include <list>
 
 namespace base {
-namespace win {
 namespace dx {
 
 // D2D 合成树节点
@@ -37,6 +36,5 @@ private:
   std::unique_ptr<D2d1LayerNode> _root;
 };
 
-}
 }
 }

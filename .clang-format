@@ -3,6 +3,7 @@ BasedOnStyle: Chromium
 
 # 左括号(左圆括号、左尖括号、左方括号)后的对齐: Align, DontAlign, AlwaysBreak(总是在左括号后换行)
 #AlignAfterOpenBracket: AlwaysBreak
+AlignAfterOpenBracket: Align
 
 # 大括号的换行规则
 #BreakBeforeBraces: Allman

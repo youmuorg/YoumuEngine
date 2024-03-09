@@ -3,7 +3,6 @@
 #include <chrono>
 
 namespace base {
-namespace win {
 namespace dx {
 
 class FpsCounter {
@@ -19,6 +18,5 @@ private:
   std::chrono::high_resolution_clock::duration _durationUpdate;
 };
 
-}
 }
 }

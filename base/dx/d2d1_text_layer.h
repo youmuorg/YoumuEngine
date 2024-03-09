@@ -5,7 +5,6 @@
 #include "dx_utils.h"
 
 namespace base {
-namespace win {
 namespace dx {
 
 class D2d1DebugInfoLayer : public D2d1Layer {
@@ -22,6 +21,5 @@ private:
   FpsCounter _fpsCounter;
 };
 
-}
 }
 }

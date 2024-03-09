@@ -7,18 +7,17 @@
 #include <sstream>
 
 namespace base {
-namespace win {
 namespace dx {
 
-D3d12Window::D3d12Window()
-  : Win32Window(overlappedWindowProperties),
-    _dxgiFactory4(),
-    _device(_dxgiFactory4.factory4()),
-    _dxgiDevice(_dxgiFactory4.factory4(), _device.commandQueue(), handle()),
-    _pipeline(_device.device(), _dxgiDevice.swapChain1(), d3d12PipelineDefaultConfig) {
+D3d12Window::D3d12Window() {
+    this->CreateOverlappedWindow();
+    _dxgiFactory4 = std::make_unique<DxgiFactory4>();
+    _device = std::make_unique<D3d12Device>(_dxgiFactory4->factory4());
+    _dxgiDevice = std::make_unique<DxgiDevice>(_dxgiFactory4->factory4(), _device->commandQueue(), handle());
+    _pipeline = std::make_unique<D3d12Pipeline>(_device->device(), _dxgiDevice->swapChain1(), d3d12PipelineDefaultConfig);
   //_triangle = std::make_unique<D3d11Triangle>(_d3d11Device.device());
 
-  _frameIndex = _dxgiDevice.swapChain3()->GetCurrentBackBufferIndex();
+  _frameIndex = _dxgiDevice->swapChain3()->GetCurrentBackBufferIndex();
 }
 
 void D3d12Window::OnResize(UINT width, UINT height) {
@@ -90,7 +89,7 @@ void D3d12Window::Render() {
   //_quad->Draw(_device.context());
   //_triangle->Draw(_d3d11Device.context());
 
-  _dxgiDevice.Present();
+  _dxgiDevice->Present();
 
   _fpsCounter.Inc();
   if (_fpsCounter.Update()) {
@@ -105,5 +104,4 @@ void D3d12Window::Render() {
 }
 
 } // namespace dx
-} // namespace win
 } // namespace base

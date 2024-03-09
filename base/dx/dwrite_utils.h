@@ -1,10 +1,9 @@
 #pragma once
 
-#include "dx_base.h"
+#include "dx_common.h"
 #include <dwrite.h>
 
 namespace base {
-namespace win {
 namespace dx {
 
 class DwriteFactory {
@@ -18,6 +17,5 @@ private:
   ComPtr<IDWriteFactory> _factory;
 };
 
-}
 }
 }

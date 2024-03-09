@@ -1,10 +1,8 @@
 #include "dxgi_utils.h"
-#include "../com_error.h"
 
 #include <mutex>
 
 namespace base {
-namespace win {
 namespace dx {
 
 using namespace win;
@@ -207,5 +205,4 @@ void DxgiDuplication::ReleaseFrame() {
 }
 
 }  // namespace dx
-}  // namespace win
 }  // namespace base

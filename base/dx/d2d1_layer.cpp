@@ -1,7 +1,6 @@
 #include "d2d1_layer.h"
 
 namespace base {
-namespace win {
 namespace dx {
 
 D2d1Layer::D2d1Layer(ID2D1RenderTarget* rt) {
@@ -27,6 +26,5 @@ void D2d1QuadLayer::Draw(ID2D1RenderTarget* rt) {
   rt->PopLayer();
 }
 
-}
 }
 }

@@ -1,9 +1,9 @@
-#include <base/win/win32_base.h>
-#include <base/win/com_base.h>
+#include <base/win/win32_common.h>
+#include <base/win/com_common.h>
 #include <base/win/message_loop.h>
-#include <base/win/dx/d2d1_window.h>
-#include <base/win/dx/d2d1_layer.h>
-#include <base/win/dx/d2d1_text_layer.h>
+#include <base/dx/d2d1_window.h>
+#include <base/dx/d2d1_layer.h>
+#include <base/dx/d2d1_text_layer.h>
 
 #include <iostream>
 #include <chrono>
@@ -11,10 +11,9 @@
 
 using namespace std::literals::chrono_literals;
 using namespace base;
-namespace dx = base::win::dx;
 
 int WINAPI wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int) {
-  win::ComApartmentScope comApartment;
+  win::ComApartment::Initialize();
       
   dx::D2d1Window wnd;
   wnd.d2d1Compositor().AddLayer(std::make_unique<dx::D2d1QuadLayer>(wnd.d2d1RenderTarget()->renderTarget()));

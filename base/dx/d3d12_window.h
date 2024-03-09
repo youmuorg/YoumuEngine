@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../win32_window.h"
+#include <base/win/win32_window.h>
 #include "d3d12_utils.h"
 #include "dxgi_utils.h"
 #include "dx_utils.h"
@@ -9,7 +9,6 @@
 #include <memory>
 
 namespace base {
-namespace win {
 namespace dx {
 
 class D3d12Window : public Win32Window {
@@ -24,10 +23,10 @@ private:
   virtual void OnMove(INT x, INT y) override;
 
 private:
-  DxgiFactory4 _dxgiFactory4;
-  D3d12Device _device;
-  DxgiDevice _dxgiDevice;
-  D3d12Pipeline _pipeline;
+  std::unique_ptr<DxgiFactory4> _dxgiFactory4;
+  std::unique_ptr<D3d12Device> _device;
+  std::unique_ptr<DxgiDevice> _dxgiDevice;
+  std::unique_ptr<D3d12Pipeline> _pipeline;
 
   // 交换链缓冲索引
   uint32_t _frameIndex = 0;
@@ -39,5 +38,4 @@ private:
 };
 
 } // namespace dx
-} // namespace win
 } // namespace base

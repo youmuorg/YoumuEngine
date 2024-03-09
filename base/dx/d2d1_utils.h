@@ -1,10 +1,9 @@
 #pragma once 
 
-#include "d2d1_base.h"
+#include "d2d1_common.h"
 
 
 namespace base {
-namespace win {
 namespace dx {
 
 class D2d1Factory {
@@ -59,6 +58,5 @@ private:
 };
 
 
-}
 }
 }

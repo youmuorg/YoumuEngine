@@ -1,10 +1,8 @@
 #include "dwrite_utils.h"
-#include "../error.h"
 
 #include <mutex>
 
 namespace base {
-namespace win {
 namespace dx {
 
 DwriteFactory::DwriteFactory() {
@@ -33,6 +31,5 @@ DwriteFactory::DwriteFactory() {
   _ComThrowIfError(hr);
 }
 
-}
 }
 }

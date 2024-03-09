@@ -4,7 +4,6 @@
 #include <mutex>
 
 namespace base {
-namespace win {
 namespace dx {
 
 D2d1Factory::D2d1Factory() {
@@ -94,6 +93,5 @@ void D2d1Quad::Draw(ID2D1RenderTarget* rt) {
   rt->FillRectangle(rect, _brush.Get());
 }
 
-}
 }
 }

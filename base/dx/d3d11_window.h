@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../win32_window.h"
+#include <base/win/win32_window.h>
 #include "d3d11_utils.h"
 #include "dxgi_utils.h"
 #include "dx_utils.h"
@@ -9,7 +9,6 @@
 #include <memory>
 
 namespace base {
-namespace win {
 namespace dx {
 
 class D3d11Window : public Win32Window {
@@ -37,5 +36,4 @@ protected:
 };
 
 } // namespace dx
-} // namespace win
 } // namespace base

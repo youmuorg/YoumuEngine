@@ -8,7 +8,6 @@
 #include <cstdint>
 
 namespace base {
-namespace win {
 namespace dx {
 
 using Microsoft::WRL::ComPtr;
@@ -152,5 +151,4 @@ public:
 };
 
 } // namespace dx
-} // namespace win
 } // namespace base

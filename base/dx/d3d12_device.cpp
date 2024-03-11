@@ -112,11 +112,19 @@ void D3d12Device::CreateDevice(IDXGIFactory1* dxgiFactory) {
 
   _ThrowMessageIfNot(msql.NumQualityLevels > 0,
                      "Unexpected MSAA quality level.");
+
+  // 创建命令队列
+  D3D12_COMMAND_QUEUE_DESC queueDesc = {};
+  queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+  queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+
+  hr = _device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&_commandQueue));
+  _ThrowIfFailed(hr);
 }
 
 void D3d12Device::CreateSwapchainForHwnd(IDXGIFactory2* dxgiFactory,
                                          HWND hwnd) {
-  _ThrowIfNot(_commandQueue.Get() != nullptr);
+  _ThrowIfNull(_commandQueue.Get());
 
   // 双缓冲
   _frameCount = 2;
@@ -158,6 +166,8 @@ void D3d12Device::CreateSwapchainForHwnd(IDXGIFactory2* dxgiFactory,
   hr = _swapchain->GetBuffer(_frameIndex, IID_PPV_ARGS(&buffer));
   _ThrowIfFailed(hr);
   D3D12_RESOURCE_DESC bufferDesc = buffer->GetDesc();
+  // _viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(bufferDesc.Width), static_cast<float>(bufferDesc.Height));
+  // _scissorRect = CD3DX12_RECT(0, 0, static_cast<LONG>(bufferDesc.Width), static_cast<LONG>(bufferDesc.Height));
   _viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(bufferDesc.Width), static_cast<float>(bufferDesc.Height));
   _scissorRect = CD3DX12_RECT(0, 0, static_cast<LONG>(bufferDesc.Width), static_cast<LONG>(bufferDesc.Height));
 }
@@ -172,17 +182,8 @@ void D3d12Device::CreateFence() {
   _fenceEvent.Create();
 }
 
-void D3d12Device::CreateCommandQueue() {
-  // 创建命令队列
-  D3D12_COMMAND_QUEUE_DESC queueDesc = {};
-  queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-  queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-
-  HRESULT hr =
-      _device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&_commandQueue));
-  _ThrowIfFailed(hr);
-
-  hr = _device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT,
+void D3d12Device::CreateCommandList() {
+  HRESULT hr = _device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT,
                                        IID_PPV_ARGS(&_commandAllocator));
   _ThrowIfFailed(hr);
 
@@ -255,7 +256,31 @@ void D3d12Device::CreateDsv() {
   }
 }
 
-void D3d12Device::CreatePipeline() {}
+void D3d12Device::CreateRootSignature() {
+  // 创建根签名
+  CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
+  rootSignatureDesc.Init(
+      0, nullptr, 0, nullptr,
+      D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+
+  ComPtr<ID3DBlob> signature;
+  ComPtr<ID3DBlob> error;
+  HRESULT hr = _GetD3d12SerializeRootSignatureFun()(
+      &rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error);
+  hr = _device->CreateRootSignature(0, signature->GetBufferPointer(),
+                                   signature->GetBufferSize(),
+                                   IID_PPV_ARGS(&_rootSignature));
+  _ThrowIfFailed(hr);
+
+}
+
+void D3d12Device::CreatePipeline() {
+  CreateCommandList();
+  CreateDescriptorHeaps();
+  CreateFence();
+  CreateRtv();
+  CreateRootSignature();
+}
 
 void D3d12Device::BeginPopulateCommandList() {
   // 必须在 GPU 执行完成关联的命令列表，才能重置此分配器。
@@ -266,6 +291,7 @@ void D3d12Device::BeginPopulateCommandList() {
   hr = _commandList->Reset(_commandAllocator.Get(), nullptr);
   _ThrowIfFailed(hr);
 
+  _commandList->SetGraphicsRootSignature(_rootSignature.Get());
   _commandList->RSSetViewports(1, &_viewport);
   _commandList->RSSetScissorRects(1, &_scissorRect);
 

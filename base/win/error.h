@@ -9,6 +9,13 @@
 namespace base {
 namespace win {
 
+template<typename T>
+inline void _ThrowIfNull(T* ptr) {
+  if (ptr == nullptr) {
+    throw std::runtime_error{"ptr is nullptr."};
+  }
+}
+
 inline void _ThrowIfNot(bool expr, const std::source_location location = 
     std::source_location::current()) {
   if (!expr) {

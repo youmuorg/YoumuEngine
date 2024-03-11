@@ -14,6 +14,7 @@ using win::_ThrowIfFailed;
 using win::_ThrowIfError;
 using win::_ThrowIfNot;
 using win::_ThrowMessageIfNot;
+using win::_ThrowIfNull;
 
 }
 }

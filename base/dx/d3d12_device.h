@@ -13,21 +13,11 @@
 namespace base {
 namespace dx {
 
-HMODULE _GetD3d12Lib();
-PFN_D3D12_SERIALIZE_ROOT_SIGNATURE _GetD3d12SerializeRootSignatureFun();
-
 class D3d12Device {
 public:
   void CreateDevice(IDXGIFactory1* dxgiFactory);
-  void CreateFence();
-  void CreateCommandQueue();
+  // 创建交换链
   void CreateSwapchainForHwnd(IDXGIFactory2* dxgiFactory, HWND hwnd);
-  // 创建资源描述符堆
-  void CreateDescriptorHeaps();
-  // 创建渲染目标视图
-  void CreateRtv();
-  // 创建深度、模板视图
-  void CreateDsv();
   // 创建管线相关资源
   void CreatePipeline();
 
@@ -42,8 +32,19 @@ public:
   void WaitCommandList();
 
   ID3D12Device* device() { return _device.Get(); }
-  ID3D12CommandAllocator* commandAllocator() { return _commandAllocator.Get(); }
+  ID3D12RootSignature* rootSignature() { return _rootSignature.Get(); }
   ID3D12GraphicsCommandList* commandList() { return _commandList.Get(); }
+
+private:
+  void CreateFence();
+  void CreateCommandList();
+  // 创建资源描述符堆
+  void CreateDescriptorHeaps();
+  // 创建渲染目标视图
+  void CreateRtv();
+  // 创建深度、模板视图
+  void CreateDsv();
+  void CreateRootSignature();
 
 public:
   static void EnableDebugLayer();
@@ -83,6 +84,9 @@ private:
   // pipeline
   CD3DX12_VIEWPORT _viewport;
   CD3DX12_RECT _scissorRect;
+
+  // assets
+  ComPtr<ID3D12RootSignature> _rootSignature;
 };
 
 }  // namespace dx

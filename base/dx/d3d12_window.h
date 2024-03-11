@@ -17,8 +17,8 @@ protected:
   virtual void OnResize(uint32_t width, uint32_t height) override;
   virtual void OnMove(int32_t x, int32_t y) override;
 
-  virtual void OnLoadAssets(ID3D12Device* device) {};
-  virtual void OnPopulateCommandList(ID3D12GraphicsCommandList* commandList) {};
+  virtual void OnInitAssets(ID3D12Device* device, ID3D12RootSignature* rootSignature) {};
+  virtual void OnDraw(ID3D12GraphicsCommandList* commandList) {};
 
 private:
   D3d12Device _d3d12Device;

@@ -12,18 +12,16 @@ namespace dx {
 void D3d12Window::Initialize() {
     _dxgiDevice.CreateFactory6();
     _d3d12Device.CreateDevice(_dxgiDevice.factory1());
-    _d3d12Device.CreateCommandQueue();
 
     CreateOverlappedWindow();
 
     _d3d12Device.CreateSwapchainForHwnd(_dxgiDevice.factory2(), handle());
-    _d3d12Device.CreateDescriptorHeaps();
-    _d3d12Device.CreateFence();
-    _d3d12Device.CreateRtv();
+    _d3d12Device.CreatePipeline();
 
-    OnLoadAssets(_d3d12Device.device());
+    OnInitAssets(_d3d12Device.device(), _d3d12Device.rootSignature());
 
     // 渲染前确保资源上传 GPU 完成
+    _d3d12Device.ExecuteCommandList();
     _d3d12Device.WaitCommandList();
 
     Render();
@@ -77,7 +75,7 @@ void D3d12Window::OnMove(INT x, INT y) {
 
 void D3d12Window::Render() {
   _d3d12Device.BeginPopulateCommandList();
-  OnPopulateCommandList(_d3d12Device.commandList());
+  OnDraw(_d3d12Device.commandList());
   _d3d12Device.EndPopulateCommandList();
   _d3d12Device.ExecuteCommandList();
   _d3d12Device.Present();

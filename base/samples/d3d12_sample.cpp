@@ -17,11 +17,11 @@ using namespace base;
 
 class D3d12SampleWindow : public dx::D3d12Window {
 protected:
-  virtual void OnLoadAssets(ID3D12Device* device) override {
-    _triangle.CreateAssets(device);
+  virtual void OnInitAssets(ID3D12Device* device, ID3D12RootSignature* rootSignature) override {
+    _triangle.CreatePipelineState(device, rootSignature);
   }
-  virtual void OnPopulateCommandList(ID3D12GraphicsCommandList* commandList) override {
-    _triangle.PopulateCommandList(commandList);
+  virtual void OnDraw(ID3D12GraphicsCommandList* commandList) override {
+    _triangle.Draw(commandList);
   }
 
 private:

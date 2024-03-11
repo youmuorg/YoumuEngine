@@ -1,22 +1,18 @@
 #pragma once
 
-#include <directx/d3d12.h>
 #include "dx_common.h"
+#include "d3d12_pipeline_state.h"
 
 
 namespace base {
 namespace dx {
 
-class D3d12Triangle {
+class D3d12Triangle : protected D3d12GraphicsPso {
 public:
-  void CreateAssets(ID3D12Device* device);
-  void PopulateCommandList(ID3D12GraphicsCommandList* commandList);
+  void CreatePipelineState(ID3D12Device* device, ID3D12RootSignature* rootSignature);
+  void Draw(ID3D12GraphicsCommandList* commandList);
 
 private:
-  // pipeline
-  ComPtr<ID3D12RootSignature> _rootSignature;
-  ComPtr<ID3D12PipelineState> _pipelineState;
-
   // resource
   ComPtr<ID3D12Resource> _vertexBuffer;
   D3D12_VERTEX_BUFFER_VIEW _vertexBufferView;

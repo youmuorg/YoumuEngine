@@ -31,22 +31,7 @@ struct Vertex {
   XMFLOAT4 color;
 };
 
-void D3d12Triangle::CreateAssets(ID3D12Device* device) {
-  // 创建根签名
-  CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-  rootSignatureDesc.Init(
-      0, nullptr, 0, nullptr,
-      D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-
-  ComPtr<ID3DBlob> signature;
-  ComPtr<ID3DBlob> error;
-  HRESULT hr = _GetD3d12SerializeRootSignatureFun()(
-      &rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error);
-  hr = device->CreateRootSignature(0, signature->GetBufferPointer(),
-                                   signature->GetBufferSize(),
-                                   IID_PPV_ARGS(&_rootSignature));
-  _ThrowIfFailed(hr);
-
+void D3d12Triangle::CreatePipelineState(ID3D12Device* device, ID3D12RootSignature* rootSignature) {
   // 创建着色器
   ComPtr<ID3DBlob> vertexShader;
   ComPtr<ID3DBlob> pixelShader;
@@ -70,7 +55,7 @@ void D3d12Triangle::CreateAssets(ID3D12Device* device) {
   // 创建图形管线状态对象（PSO）
   D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
   psoDesc.InputLayout = {inputElementDescs, _countof(inputElementDescs)};
-  psoDesc.pRootSignature = _rootSignature.Get();
+  psoDesc.pRootSignature = rootSignature;
   psoDesc.VS = CD3DX12_SHADER_BYTECODE(vertexShader.Get());
   psoDesc.PS = CD3DX12_SHADER_BYTECODE(pixelShader.Get());
   psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
@@ -85,12 +70,12 @@ void D3d12Triangle::CreateAssets(ID3D12Device* device) {
   _ThrowIfFailed(device->CreateGraphicsPipelineState(
       &psoDesc, IID_PPV_ARGS(&_pipelineState)));
 
-  float m_aspectRatio = 1.0f;
   // 创建顶点缓冲
+  float aspectRatio = 1.0f;
   Vertex triangleVertices[] = {
-      {{0.0f, 0.25f * m_aspectRatio, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},
-      {{0.25f, -0.25f * m_aspectRatio, 0.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},
-      {{-0.25f, -0.25f * m_aspectRatio, 0.0f}, {0.0f, 0.0f, 1.0f, 1.0f}}};
+      {{0.0f, 0.25f * aspectRatio, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},
+      {{0.25f, -0.25f * aspectRatio, 0.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},
+      {{-0.25f, -0.25f * aspectRatio, 0.0f}, {0.0f, 0.0f, 1.0f, 1.0f}}};
 
   const UINT vertexBufferSize = sizeof(triangleVertices);
 
@@ -121,10 +106,9 @@ void D3d12Triangle::CreateAssets(ID3D12Device* device) {
   _vertexBufferView.SizeInBytes = vertexBufferSize;
 }
 
-void D3d12Triangle::PopulateCommandList(ID3D12GraphicsCommandList* commandList) {
+void D3d12Triangle::Draw(ID3D12GraphicsCommandList* commandList) {
   // Set necessary state.
   commandList->SetPipelineState(_pipelineState.Get());
-  commandList->SetGraphicsRootSignature(_rootSignature.Get());
   commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
   commandList->IASetVertexBuffers(0, 1, &_vertexBufferView);
   commandList->DrawInstanced(3, 1, 0, 0);

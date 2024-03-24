@@ -17,8 +17,9 @@ void D3d12Window::Initialize() {
 
     _d3d12Device.CreateSwapchainForHwnd(_dxgiDevice.factory2(), handle());
     _d3d12Device.CreatePipeline();
+    _d3d12Device.CreateAssets();
 
-    OnInitAssets(_d3d12Device.device(), _d3d12Device.rootSignature());
+    OnInitAssets(_d3d12Device.device(), _d3d12Device.commandList(), _d3d12Device.rootSignature());
 
     // 渲染前确保资源上传 GPU 完成
     _d3d12Device.ExecuteCommandList();

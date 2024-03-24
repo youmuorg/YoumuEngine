@@ -16,6 +16,9 @@ public:
   IDXGIFactory2* factory2() {return _factory2.Get(); }
   IDXGIFactory6* factory6() {return _factory6.Get(); }
 
+public:
+  static void EnableDebug();
+
 private:
   ComPtr<IDXGIFactory1> _factory1;
   ComPtr<IDXGIFactory2> _factory2;

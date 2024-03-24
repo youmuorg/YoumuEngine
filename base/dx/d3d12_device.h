@@ -20,6 +20,8 @@ public:
   void CreateSwapchainForHwnd(IDXGIFactory2* dxgiFactory, HWND hwnd);
   // 创建管线相关资源
   void CreatePipeline();
+  // 创建资产
+  void CreateAssets();
 
   // 记录命令列表
   void BeginPopulateCommandList();
@@ -68,15 +70,22 @@ private:
   win::Event _fenceEvent;
 
   // descriptor heaps
-  ComPtr<ID3D12DescriptorHeap> _rtvHeap;  // 渲染目标视图（render target view）描述符堆
-  ComPtr<ID3D12DescriptorHeap> _dsvHeap;  // 深度、模板视图（depth/stencil view）描述符堆
-  ComPtr<ID3D12DescriptorHeap> _cbvHeap;  // 常量缓冲区视图（constant buffer view）描述符堆
-  ComPtr<ID3D12DescriptorHeap> _srvHeap;  // 着色器资源视图（shader resource view）描述符堆
-  ComPtr<ID3D12DescriptorHeap> _uavHeap;  // 无序访问视图（unordered access view）描述符堆
-  ComPtr<ID3D12DescriptorHeap> _samplerHeap;  // 采样器（sampleer）描述符堆
+
+  // 渲染目标视图（render target view）描述符堆
+  ComPtr<ID3D12DescriptorHeap> _rtvHeap;
   uint32_t _rtvDescriptorSize = 0;
-  uint32_t _dsvDescriptorSize = 0;
-  uint32_t _cbvDescriptorSize = 0;
+
+  // 深度、模板视图（depth/stencil view）描述符堆
+  ComPtr<ID3D12DescriptorHeap> _dsvHeap;
+
+  // 常量缓冲区视图（constant buffer view）描述符堆
+  // 着色器资源视图（shader resource view）描述符堆
+  // 无序访问视图（unordered access view）描述符堆
+  ComPtr<ID3D12DescriptorHeap> _cbvSrvHeap;
+  uint32_t _cbvSrvDescriptorSize = 0;
+
+  // 采样器（sampleer）描述符堆
+  ComPtr<ID3D12DescriptorHeap> _samplerHeap;
 
   // descriptor
   std::vector<ComPtr<ID3D12Resource>> _rtvBuffers;

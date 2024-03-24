@@ -5,17 +5,16 @@
 namespace base {
 namespace dx {
 
-// PSO（Pipeline state object）
-class D3d12Pso {
+class D3d12PipelineState {
 public:
   
 protected:
   ComPtr<ID3D12PipelineState> _pipelineState;
 };
 
-class D3d12GraphicsPso : public D3d12Pso {};
+class D3d12GraphicsPipelineState : public D3d12PipelineState {};
 
-class D3d12ComputePso : public D3d12Pso {};
+class D3d12ComputePipelineState : public D3d12PipelineState {};
 
 }  // namespace dx
 }  // namespace base

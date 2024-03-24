@@ -22,6 +22,18 @@ PFN_D3D12_SERIALIZE_ROOT_SIGNATURE _GetD3d12SerializeRootSignatureFun() {
   return d3d12SerializeRootSignature;
 }
 
+PFN_D3D12_SERIALIZE_VERSIONED_ROOT_SIGNATURE
+_GetD3d12SerializeVersionedRootSignatureFun() {
+  PFN_D3D12_SERIALIZE_VERSIONED_ROOT_SIGNATURE
+      d3d12SerializeVersionedRootSignature =
+          reinterpret_cast<PFN_D3D12_SERIALIZE_VERSIONED_ROOT_SIGNATURE>(
+              ::GetProcAddress(_GetD3d12Lib(),
+                               "D3D12SerializeVersionedRootSignature"));
+  _ThrowIfError("GetProcAddress",
+                d3d12SerializeVersionedRootSignature != nullptr);
+  return d3d12SerializeVersionedRootSignature;
+}
+
 void D3d12Device::EnableDebugLayer() {
   PFN_D3D12_GET_DEBUG_INTERFACE d3d12GetDebugInterface =
       reinterpret_cast<PFN_D3D12_GET_DEBUG_INTERFACE>(
@@ -71,7 +83,8 @@ void D3d12Device::CreateDevice(IDXGIFactory1* dxgiFactory) {
         break;
       }
     }
-  } else {
+  }
+  if (adapter.Get() == nullptr) {
     for (uint32_t index = 0;; ++index) {
       HRESULT hr = dxgiFactory->EnumAdapters1(index, &adapter);
       if (FAILED(hr)) {
@@ -210,7 +223,7 @@ void D3d12Device::CreateDescriptorHeaps() {
   _ThrowIfFailed(hr);
 
   D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
-  dsvHeapDesc.NumDescriptors = _frameCount;
+  dsvHeapDesc.NumDescriptors = 1;
   dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
   dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
   dsvHeapDesc.NodeMask = 0;
@@ -218,12 +231,26 @@ void D3d12Device::CreateDescriptorHeaps() {
       &dsvHeapDesc, IID_PPV_ARGS(&_dsvHeap));
   _ThrowIfFailed(hr);
 
+  D3D12_DESCRIPTOR_HEAP_DESC cbvSrvHeapDesc = {};
+  cbvSrvHeapDesc.NumDescriptors = _frameCount + 1; // +1 for SRV
+  cbvSrvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+  cbvSrvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+  hr = _device->CreateDescriptorHeap(&cbvSrvHeapDesc,
+                                     IID_PPV_ARGS(&_cbvSrvHeap));
+  _ThrowIfFailed(hr);
+
+  D3D12_DESCRIPTOR_HEAP_DESC sampleHeapDesc = {};
+  sampleHeapDesc.NumDescriptors = 1;
+  sampleHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER;
+  sampleHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+  hr = _device->CreateDescriptorHeap(&sampleHeapDesc,
+                                     IID_PPV_ARGS(&_samplerHeap));
+  _ThrowIfFailed(hr);
+
   // 获取描述符大小
   _rtvDescriptorSize = _device->GetDescriptorHandleIncrementSize(
       D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-  _dsvDescriptorSize = _device->GetDescriptorHandleIncrementSize(
-      D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-  _cbvDescriptorSize = _device->GetDescriptorHandleIncrementSize(
+  _cbvSrvDescriptorSize = _device->GetDescriptorHandleIncrementSize(
       D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
@@ -257,29 +284,54 @@ void D3d12Device::CreateDsv() {
 }
 
 void D3d12Device::CreateRootSignature() {
+  // 特性等级检查
+  D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
+  featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
+  HRESULT hr = _device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &featureData, sizeof(featureData));
+  _ThrowIfFailed(hr);
+
   // 创建根签名
-  CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-  rootSignatureDesc.Init(
-      0, nullptr, 0, nullptr,
+  CD3DX12_DESCRIPTOR_RANGE1 ranges[3];
+  ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0,
+                 D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+  ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 1, 0);
+  ranges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0, 0,
+                 D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+
+  CD3DX12_ROOT_PARAMETER1 rootParameters[3];
+  rootParameters[0].InitAsDescriptorTable(1, &ranges[0],
+                                          D3D12_SHADER_VISIBILITY_PIXEL);
+  rootParameters[1].InitAsDescriptorTable(1, &ranges[1],
+                                          D3D12_SHADER_VISIBILITY_PIXEL);
+  rootParameters[2].InitAsDescriptorTable(1, &ranges[2],
+                                          D3D12_SHADER_VISIBILITY_ALL);
+
+  CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
+  rootSignatureDesc.Init_1_1(
+      _countof(rootParameters), rootParameters, 0, nullptr,
       D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
   ComPtr<ID3DBlob> signature;
   ComPtr<ID3DBlob> error;
-  HRESULT hr = _GetD3d12SerializeRootSignatureFun()(
-      &rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error);
-  hr = _device->CreateRootSignature(0, signature->GetBufferPointer(),
-                                   signature->GetBufferSize(),
-                                   IID_PPV_ARGS(&_rootSignature));
+  hr = _GetD3d12SerializeVersionedRootSignatureFun()(
+      &rootSignatureDesc, &signature, &error);
   _ThrowIfFailed(hr);
 
+  hr = _device->CreateRootSignature(0, signature->GetBufferPointer(),
+                                    signature->GetBufferSize(),
+                                    IID_PPV_ARGS(&_rootSignature));
+  _ThrowIfFailed(hr);
 }
 
 void D3d12Device::CreatePipeline() {
-  CreateCommandList();
   CreateDescriptorHeaps();
   CreateFence();
-  CreateRtv();
+}
+
+void D3d12Device::CreateAssets() {
   CreateRootSignature();
+  CreateCommandList();
+  CreateRtv();
 }
 
 void D3d12Device::BeginPopulateCommandList() {
@@ -291,7 +343,6 @@ void D3d12Device::BeginPopulateCommandList() {
   hr = _commandList->Reset(_commandAllocator.Get(), nullptr);
   _ThrowIfFailed(hr);
 
-  _commandList->SetGraphicsRootSignature(_rootSignature.Get());
   _commandList->RSSetViewports(1, &_viewport);
   _commandList->RSSetScissorRects(1, &_scissorRect);
 
@@ -305,10 +356,15 @@ void D3d12Device::BeginPopulateCommandList() {
   CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(
       _rtvHeap->GetCPUDescriptorHandleForHeapStart(), _frameIndex,
       _rtvDescriptorSize);
-  _commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
   // 清屏
   const float clearColor[] = {0.0f, 0.4f, 0.5f, 1.0f};
   _commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+  _commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
+
+  // ID3D12DescriptorHeap* descriptorHeaps[] = { _cbvHeap.Get() };
+  // _commandList->SetDescriptorHeaps(1, descriptorHeaps);
+  _commandList->SetGraphicsRootSignature(_rootSignature.Get());
+  // _commandList->SetGraphicsRootDescriptorTable(0, _cbvHeap->GetGPUDescriptorHandleForHeapStart());
 }
 
 void D3d12Device::EndPopulateCommandList() {

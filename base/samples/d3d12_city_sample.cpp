@@ -2,7 +2,7 @@
 
 #include <base/dx/d3d12_device.h>
 #include <base/dx/d3d12_window.h>
-#include <base/dx/d3d12_triangle.h>
+#include <base/dx/d3d12_cube.h>
 #include <base/dx/dxgi_utils.h>
 #include <base/win/com_common.h>
 #include <base/win/win32_window.h>
@@ -17,15 +17,16 @@ using namespace base;
 
 class D3d12SampleWindow : public dx::D3d12Window {
 protected:
-  virtual void OnInitAssets(ID3D12Device* device, ID3D12RootSignature* rootSignature) override {
-    _triangle.CreatePipelineState(device, rootSignature);
+  virtual void OnInitAssets(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, ID3D12RootSignature* rootSignature) override {
+    _cube.CreatePipelineState(device, commandList, rootSignature);
+    _cube.CreateBoxGeometry(device, commandList);
   }
   virtual void OnDraw(ID3D12GraphicsCommandList* commandList) override {
-    _triangle.Draw(commandList);
+    _cube.Draw(commandList);
   }
 
 private:
-  dx::D3d12Triangle _triangle;
+  dx::D3d12Cube _cube;
 };
 
 class D3d12SampleApp : public win::Win32Application {

@@ -4,8 +4,7 @@
 
 #include <mutex>
 
-namespace base {
-namespace dx {
+namespace base::dx {
 
 static HMODULE _GetD3dCompilerLib() {
   static std::once_flag loadFlag;
@@ -28,10 +27,15 @@ using D3DCompileFromFileProc = HRESULT(WINAPI)(LPCWSTR pFileName,
                                                ID3DBlob** ppErrorMsgs);
 
 static D3DCompileFromFileProc* _GetD3DCompileFromFileFun() {
-  D3DCompileFromFileProc* d3DCompileFromFile =
-      reinterpret_cast<D3DCompileFromFileProc*>(
-          ::GetProcAddress(_GetD3dCompilerLib(), "D3DCompileFromFile"));
-  _ThrowIfError("GetProcAddress", d3DCompileFromFile != nullptr);
+  static D3DCompileFromFileProc* d3DCompileFromFile = nullptr;
+  static std::once_flag flag;
+
+  std::call_once(flag, []() {
+    d3DCompileFromFile = reinterpret_cast<D3DCompileFromFileProc*>(
+        ::GetProcAddress(_GetD3dCompilerLib(), "D3DCompileFromFile"));
+    _ThrowIfError("GetProcAddress", d3DCompileFromFile != nullptr);
+  });
+  _ThrowIfNull(d3DCompileFromFile);
   return d3DCompileFromFile;
 }
 
@@ -59,5 +63,14 @@ void HlslCompiler::CompilePixelShader(const wchar_t* filePath,
   _ThrowIfFailed(hr);
 }
 
-}  // namespace dx
-}  // namespace base
+void HlslCompiler::CompileShader(const wchar_t* filePath,
+                                 const char* entrypoint,
+                                 const char* target,
+                                 ID3DBlob** blob) {
+  HRESULT hr =
+      _GetD3DCompileFromFileFun()(filePath, nullptr, nullptr, entrypoint,
+                                  target, kCompileFlags, 0, blob, nullptr);
+  _ThrowIfFailed(hr);
+}
+
+}  // namespace base::dx

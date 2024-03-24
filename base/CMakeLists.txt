@@ -22,7 +22,7 @@ target_link_libraries(${BASE_DX_LIB} PRIVATE Microsoft::DirectXTex)
 
 find_package(directx-headers CONFIG REQUIRED)
 target_link_libraries(${BASE_DX_LIB} PUBLIC Microsoft::DirectX-Guids Microsoft::DirectX-Headers)
-
 target_link_libraries(${BASE_DX_LIB} PUBLIC base_win)
+target_include_directories(${BASE_DX_LIB} PUBLIC "${CMAKE_CURRENT_LIST_DIR}/../nuget_installed/WinPixEventRuntime.1.0.231030001/include")
 
 add_subdirectory("samples")
